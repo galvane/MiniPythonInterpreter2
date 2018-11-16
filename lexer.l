@@ -5,32 +5,29 @@ and main() ***/
 %{ 
 int linenumber = 1;
 int indentlevel = 0;
-char keywords[32][10] = {"print","False","class","finally","is","return","None",
-                            "for","lambda","try","True","def","from","while","and",
-                            "del","global","not","elif","if","or","else",
-                            "import","break"};
-%} 
-
+%}
 %%
-[" "]{3,} {indentlevel++;}
+[" "]{2,4} {indentlevel++;}
 
-(print|if.) {printf("%d@KEYWORD@%s@%d\n", linenumber, yytext, indentlevel);}
-[a-zA-Z_$][a-zA-Z_$0-9]* {printf("%d@VARIABLE@%s@%d\n", linenumber,yytext, indentlevel); } 
-":" {printf("%d@COLON@%s@%d\n", linenumber, yytext, indentlevel);}
-"(" {printf("%d@OPEN_PARENTHESIS@%s@%d\n", linenumber, yytext, indentlevel);}
-")" {printf("%d@CLOSE_PARENTHESIS@%s@%d\n",linenumber, yytext, indentlevel);}
-"," {printf("%d@COMMA@%s@%d\n",linenumber, yytext, indentlevel);}
-\"(.*)\" {printf("%d@STRING@%s@%d\n",linenumber, yytext, indentlevel);}
-">" {printf("%d@GREATER_THAN@%s@%d\n", linenumber,yytext, indentlevel);}
-"<" {printf("%d@LESS_THAN@%s@%d\n", linenumber,yytext, indentlevel);}
-"=" {printf("%d@EQUALS@%s@%d\n", linenumber,yytext, indentlevel);}
-"-" {printf("%d@MINUS@%s@%d\n", linenumber,yytext, indentlevel);}
-"+" {printf("%d@PLUS@%s@%d\n", linenumber,yytext, indentlevel);}
-"*" {printf("%d@TIMES@%s@%d\n", linenumber,yytext, indentlevel);}
-"/" {printf("%d@DIVIDE@%s@%d\n", linenumber,yytext, indentlevel);}
-[0-9]+ {printf("%d@INTEGER@%s@%d\n", linenumber,yytext, indentlevel);}
+(print|if.|def.(.*):|else:) {printf("LINE=%d TYPE=KEYWORD TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
+ 
 
-
+":" {printf("LINE=%d TYPE=COLON TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
+"(" {printf("LINE=%d TYPE=OPEN_PARENTHESIS TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
+")" {printf("LINE=%d TYPE=CLOSE_PARENTHESIS TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
+"," {printf("LINE=%d TYPE=COMMA TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
+[ ]*\"(.*)\"[ ]* {printf("LINE=%d TYPE=STRING TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
+[a-zA-Z_$][a-zA-Z_$0-9]* {printf("LINE=%d TYPE:VARIABLE TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel); }
+">" {printf("LINE=%d TYPE=GREATER_THAN TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+"<" {printf("LINE=%d TYPE=LESS_THAN TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+"=" {printf("LINE=%d TYPE=EQUALS TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+"-" {printf("LINE=%d TYPE=MINUS TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+"+" {printf("LINE=%d TYPE=PLUS TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+"*" {printf("LINE=%d TYPE=TIMES TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+"/" {printf("LINE=%d TYPE=DIVIDE TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+[0-9]+ {printf("LINE=%d TYPE=INTEGER TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+"#"(.*) {printf("LINE=%d TYPE=COMMENT TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+[ ]+ {}
 \n {linenumber++; indentlevel = 0;}
 
 %% 
@@ -51,7 +48,7 @@ int main(){
 // to take input from file 
  FILE *fp; 
  //char filename[50]; 
-char filename[50] = "program.py";
+ char filename[50] = "program.py";
  //printf("Enter the filename: \n"); 
  //scanf("%s", filename); 
  fp = fopen(filename,"r"); 
