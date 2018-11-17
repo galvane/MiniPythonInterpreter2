@@ -18,7 +18,7 @@ def[ ]+[a-zA-Z_$][a-zA-Z_$0-9]*\([a-zA-Z_$][a-zA-Z_$0-9]*(,[ ]+[a-zA-Z_$][a-zA-Z
 ")" {printf("LINE=%d TYPE=CLOSE_PARENTHESIS TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
 "," {printf("LINE=%d TYPE=COMMA TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
 [ ]*\"(.*)\"[ ]* {printf("LINE=%d TYPE=STRING TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
-[a-zA-Z_$][a-zA-Z_$0-9]* {printf("LINE=%d TYPE:VARIABLE TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel); }
+[a-zA-Z_$][a-zA-Z_$0-9]* {printf("LINE=%d TYPE=VARIABLE TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel); }
 ">" {printf("LINE=%d TYPE=GREATER_THAN TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "<" {printf("LINE=%d TYPE=LESS_THAN TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "=" {printf("LINE=%d TYPE=EQUALS TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
