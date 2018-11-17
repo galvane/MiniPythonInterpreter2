@@ -3,60 +3,114 @@
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
+#include <vector>
+#include <map>
+#include <cmath>
+#include <cstdio>
+#include <set>
+#include <algorithm>
+#include "main.h"
 
 using namespace std;
 
-int isKeyword(char buffer[]){
-    char keywords[32][10] = {"print","False","class","finally","is","return","None",
-                            "for","lambda","try","True","def","from","while","and",
-                            "del","global","not","elif","if","or","else",
-                            "import","break"};
-    int i, flag = 0;
 
-    for(i = 0; i < 28; ++i){
-        if(strcmp(keywords[i], buffer) == 0){
-            flag = 1;
-            break;
+int line;
+string type;
+string content;
+int level; //level of indent
+vector<Token>Token::tokens;
+map<Token, Token>Token::variables;
+
+//constructor
+Token::Token(int line, string type, string content, int level){
+    this->line = line;
+    this->type = type;
+    this->content = content;
+    this->level = level;
+}
+//overloading operator <
+bool Token::operator< (const Token& tokenObj) const
+{
+    if(tokenObj.line < this->line)
+        return true;
+}
+
+//update/set tokens
+void Token::updateTokens(Token token){
+    tokens.push_back(token);
+}
+
+vector<string> getFlexInput(){
+    ifstream ifs;
+    ifs.open("output.txt");
+
+    if (!ifs) {
+        cout << "Unable to open file";
+        exit(1);
+    }
+
+    string line; //temp var
+    vector<string> input;
+
+    while(ifs){
+        getline(ifs, line);
+        input.push_back(line);
+    }
+    line.clear();
+    ifs.close();
+    return input;
+}
+
+//create Token objects with associated attributes
+void Token::createTokenObjs(vector<string> flexInput){
+    for(int i = 0; i < flexInput.size(); i++){
+        if(flexInput.at(i) != "\n" && flexInput.at(i).size() != 0) {
+
+            string current = flexInput.at(i);
+            int lineIndex = current.find("LINE=");
+            int typeIndex = current.find("TYPE=");
+            int contentIndex = current.find("TOKEN=");
+            int levelIndex = current.find("LEVEL=");
+
+            try {
+                int line = stoi(current.substr(lineIndex + 5, typeIndex - lineIndex - 5 - 1));
+                string type = current.substr(typeIndex + 5, contentIndex - typeIndex - 5-1);
+                string content = current.substr(contentIndex+6,levelIndex-contentIndex-6-1);
+                int level= stoi(current.substr(levelIndex+6, current.size() - levelIndex-1));
+
+                Token *token = new Token(line, type, content, level);
+                Token::updateTokens(*token);
+            }catch(const invalid_argument& ia){
+                cerr << "Invalid argument: " << ia.what() << '\n';
+            }
+        }
+    }
+}
+
+
+int main(){
+    /* FIRST STEP */
+    //get flex input
+    vector<string> flexInput = getFlexInput();
+
+    //STEP 2:
+    //Create Token objects
+    Token::createTokenObjs(flexInput);
+
+    //STEP 3:
+    //create variable storage
+    for(int i = 0; i < Token::tokens.size()-2; i++){
+        if (Token::tokens.at(i).type == ("VARIABLE") && Token::tokens.at(i+1).type == ("EQUALS")){
+            Token::variables.insert(pair<Token, Token> (Token::tokens.at(i),Token::tokens.at(i+2)));
+
+
         }
     }
 
-    return flag;
-}
+//    for(int i = 0; i < Token::variables.size();i++){
+//
+//    }
 
-int main(){
-    char ch, buffer[15], operators[] = "+-*/%=";
-    ifstream fin("testcase1.py");
-    int i,j=0;
-
-    if(!fin.is_open()){
-        cout<<"error while opening the file\n";
-        exit(0);
-    }
-
-    while(!fin.eof()){
-           ch = fin.get();
-
-        for(i = 0; i < 6; ++i){
-               if(ch == operators[i])
-                   cout<<ch<<" is operator\n";
-           }
-
-           if(isalnum(ch)){
-               buffer[j++] = ch;
-           }
-           else if((ch == ' ' || ch == '\n') && (j != 0)){
-                   buffer[j] = '\0';
-                   j = 0;
-
-                   if(isKeyword(buffer) == 1)
-                       cout<<buffer<<" is keyword\n";
-                   else
-                       cout<<buffer<<" is indentifier\n";
-           }
-
-    }
-
-    fin.close();
 
     return 0;
 }
