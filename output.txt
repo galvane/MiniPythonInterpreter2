@@ -1,3 +1,0 @@
-Enter the filename: 
-
-Number of Captial letters in the given input - 0
