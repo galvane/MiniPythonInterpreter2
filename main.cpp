@@ -13,13 +13,18 @@
 
 using namespace std;
 
-
-int line;
-string type;
-string content;
-int level; //level of indent
+//int line;
+//string type;
+//string content;
+//int level; //level of indent
 vector<Token>Token::tokens;
 map<Token, Token>Token::variables;
+
+/* SCOPE */
+//string name;
+//string type;
+//map<string,int> variables;
+//vector<string> parameters;
 
 //constructor
 Token::Token(int line, string type, string content, int level){
@@ -87,6 +92,32 @@ void Token::createTokenObjs(vector<string> flexInput){
     }
 }
 
+void recognizeScopes(){
+    for(int i = 0; i < Token::tokens.size(); i++){
+        if(Token::tokens.at(i).type == "KEYWORD" || Token::tokens.at(i).type == "FUNCTION"){
+
+        }
+    }
+}
+
+bool isVariableAssignment(int i){
+    return (Token::tokens.at(i).type == ("VARIABLE") && Token::tokens.at(i+1).type == ("EQUALS") && Token::tokens.at(i+2).type!=("EQUALS");
+}
+
+bool isMutatedvariable(){
+
+}
+
+Scope::Scope(string name, string type){
+    this->name = name;
+    this->type = type;
+}
+void Scope::addVariable(string name, int value){
+    this->variables.insert(pair<string, int>(name, value));
+}
+void Scope::addParameter(string parameter){
+    this->parameters.push_back(parameter);
+}
 
 int main(){
     /* FIRST STEP */
@@ -98,18 +129,17 @@ int main(){
     Token::createTokenObjs(flexInput);
 
     //STEP 3:
-    //create variable storage
+    //create variable storage for
+    // functions
+    // if blocks
+    // else blocks
     for(int i = 0; i < Token::tokens.size()-2; i++){
-        if (Token::tokens.at(i).type == ("VARIABLE") && Token::tokens.at(i+1).type == ("EQUALS")){
+        if (isVariableAssignment(i)){
             Token::variables.insert(pair<Token, Token> (Token::tokens.at(i),Token::tokens.at(i+2)));
-
-
         }
     }
 
-//    for(int i = 0; i < Token::variables.size();i++){
-//
-//    }
+    // recognize function calls and addVariable() to the appropriate scope
 
 
     return 0;
