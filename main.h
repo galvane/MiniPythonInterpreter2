@@ -21,7 +21,7 @@ public:
     string content;
     int level; //level of indent
     static vector<Token>tokens;
-    static map<Token, Token>variables;
+    static map<Token, Token>globalVariables;
     bool operator< (const Token& tokenObj) const;
 
     Token(int line, string type, string content, int level);
@@ -39,4 +39,12 @@ public:
     Scope(string name, string type);
     void addVariable(string name, int value);
     void addParameter(string parameter);
+};
+
+
+/* Node of a doubly linked list */
+struct Node {
+    Scope *data;
+    struct Node* next;
+    struct Node* prev;
 };

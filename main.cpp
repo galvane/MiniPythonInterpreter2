@@ -13,18 +13,50 @@
 
 using namespace std;
 
-//int line;
-//string type;
-//string content;
-//int level; //level of indent
-vector<Token>Token::tokens;
-map<Token, Token>Token::variables;
+// split function
+vector<string> split(string str, string delimiter){
+    vector<string> parameters;
+    size_t pos = 0;
+    string token;
+    while ((pos = str.find(delimiter)) != string::npos) {
+        token = str.substr(0, pos);
+        str.erase(0, pos + delimiter.length());
+        parameters.push_back(token);
+    }
+    return parameters;
+}
 
-/* SCOPE */
-//string name;
-//string type;
-//map<string,int> variables;
-//vector<string> parameters;
+// DOUBLY LINKED LIST INSERTION:
+void appendToDLL(struct Node ** head, Scope *newData) {
+    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
+
+    struct Node* last = *head;
+
+    newNode->data = newData;
+
+    newNode->next = NULL;
+
+    if (*head == NULL)
+    {
+        newNode->prev = NULL;
+        *head = newNode;
+        return;
+    }
+
+    while (last->next != NULL)
+        last = last->next;
+
+    last->next = newNode;
+
+    newNode->prev = last;
+
+    return;
+}
+
+vector<Token>Token::tokens;
+map<Token, Token>Token::globalVariables;
+// pointers to function scope blocks
+vector<Node*>functionScopes;
 
 //constructor
 Token::Token(int line, string type, string content, int level){
@@ -101,7 +133,7 @@ void recognizeScopes(){
 }
 
 bool isVariableAssignment(int i){
-    return (Token::tokens.at(i).type == ("VARIABLE") && Token::tokens.at(i+1).type == ("EQUALS") && Token::tokens.at(i+2).type!=("EQUALS");
+    return (Token::tokens.at(i).type == ("VARIABLE") && Token::tokens.at(i+1).type == ("EQUALS") && Token::tokens.at(i+2).type!=("EQUALS"));
 }
 
 bool isMutatedvariable(){
@@ -129,15 +161,55 @@ int main(){
     Token::createTokenObjs(flexInput);
 
     //STEP 3:
-    //create variable storage for
-    // functions
-    // if blocks
-    // else blocks
+    // create scopes
     for(int i = 0; i < Token::tokens.size()-2; i++){
-        if (isVariableAssignment(i)){
-            Token::variables.insert(pair<Token, Token> (Token::tokens.at(i),Token::tokens.at(i+2)));
+        int j = i + 1;
+
+        // CASE: function, we have a head of scope which is the function definition
+        if(Token::tokens.at(i).type == "FUNCTION"){
+            // create a head of Scope
+            struct Node * head;
+
+            // finding indexes
+            int defIndex = Token::tokens.at(i).content.find("def");
+            int functionNameIndexStart = defIndex+4;
+            int openParanthesisIndex = Token::tokens.at(i).content.find("(");
+            int closeParanthesisIndex = Token::tokens.at(i).content.find(")");
+            int functionNameIndexEnd = openParanthesisIndex-1;
+
+            // defining scope
+            Scope *functionDef = new Scope(Token::tokens.at(i).content.substr(functionNameIndexStart, functionNameIndexEnd - functionNameIndexStart+1), "FUNCTION");
+
+            // defining function parameters
+            string parameters = Token::tokens.at(i).content.substr(openParanthesisIndex,closeParanthesisIndex-openParanthesisIndex+1);
+            vector<string> functionParameters = split(parameters, ",");
+            // assigned the function its associated parameters
+            for(int i = 0; i < functionParameters.size(); i++){
+                functionDef->parameters.push_back(functionParameters.at(i));
+            }
+
+            head->data = functionDef;
+            head->prev = NULL;
+            head->next = NULL;
+            while(Token::tokens.at(j).level>= Token::tokens.at(i).level){
+                if(Token::tokens.at(j).type == "KEYWORD"){
+                    Scope *scope = new Scope("", Token::tokens.at(j).type);
+                    appendToDLL(&head, scope);
+                }
+                j++;
+            }
+            functionScopes.push_back(head);
         }
+        // CASE: IF OUTSIDE OF FUNCTION
+        // CASE: ELSE OUTSIDE OF FUNCTION
     }
+
+
+//    for(int i = 0; i < Token::tokens.size()-2; i++){
+//        if (isVariableAssignment(i)){
+//            Token::variables.insert(pair<Token, Token> (Token::tokens.at(i),Token::tokens.at(i+2)));
+//        }
+//    }
 
     // recognize function calls and addVariable() to the appropriate scope
 

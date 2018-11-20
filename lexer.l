@@ -10,7 +10,7 @@ int indentlevel = 0;
 [" "]{2,4} {indentlevel++;}
 
 (print|(if[ ])|else:) {printf("LINE=%d TYPE=KEYWORD TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
-def[ ]+[a-zA-Z_$][a-zA-Z_$0-9]*\([a-zA-Z_$][a-zA-Z_$0-9]*(,[ ]+[a-zA-Z_$][a-zA-Z_$0-9])*\): {printf("LINE=%d TYPE=FUNCTION TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
+def[ ]+([a-zA-Z_$][a-zA-Z_$0-9]*)\(([a-zA-Z_$][a-zA-Z_$0-9]*)(,([a-zA-Z_$][a-zA-Z_$0-9]*))*\): {printf("LINE=%d TYPE=FUNCTION TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
  
 
 ":" {printf("LINE=%d TYPE=COLON TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
