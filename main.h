@@ -14,17 +14,4 @@
 
 using namespace std;
 
-class Token {
-public:
-    int line;
-    string type;
-    string content;
-    int level; //level of indent
-    static vector<Token>tokens;
-    static map<Token, Token>globalVariables;
-    bool operator< (const Token& tokenObj) const;
 
-    Token(int line, string type, string content, int level);
-    static void updateTokens(Token token);
-    static void createTokenObjs(vector<string> flexInput);
-};

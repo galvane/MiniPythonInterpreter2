@@ -3,15 +3,21 @@
 which can be accessed inside yylex()  
 and main() ***/
 %{ 
+#include <stdbool.h>
+#include <stdio.h>
+#include <math.h>
 int linenumber = 1;
+int prevlinenumber= 1;
 int indentlevel = 0;
+int numberofspaces = 0;
+bool newline = false;
 %}
 %%
-[" "]{2,4} {indentlevel++;}
+[" "]{3,3} {indentlevel++;}
 
 (print|(if[ ])|else:) {printf("LINE=%d TYPE=KEYWORD TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
 def[ ]+([a-zA-Z_$][a-zA-Z_$0-9]*)\(([a-zA-Z_$][a-zA-Z_$0-9]*)(,([a-zA-Z_$][a-zA-Z_$0-9]*))*\): {printf("LINE=%d TYPE=FUNCTION TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
- 
+([a-zA-Z_$][a-zA-Z_$0-9]*)[" "]*\((.*)\) {printf("LINE=%d TYPE=FUNCTIONCALL TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);} 
 
 ":" {printf("LINE=%d TYPE=COLON TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
 "(" {printf("LINE=%d TYPE=OPEN_PARENTHESIS TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
@@ -19,6 +25,7 @@ def[ ]+([a-zA-Z_$][a-zA-Z_$0-9]*)\(([a-zA-Z_$][a-zA-Z_$0-9]*)(,([a-zA-Z_$][a-zA-
 "," {printf("LINE=%d TYPE=COMMA TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
 [ ]*\"(.*)\"[ ]* {printf("LINE=%d TYPE=STRING TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
 [a-zA-Z_$][a-zA-Z_$0-9]* {printf("LINE=%d TYPE=VARIABLE TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel); }
+"==" {printf("LINE=%d TYPE=EQUALSCOMPARISON TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 ">" {printf("LINE=%d TYPE=GREATER_THAN TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "<" {printf("LINE=%d TYPE=LESS_THAN TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "=" {printf("LINE=%d TYPE=EQUALS TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
@@ -28,11 +35,10 @@ def[ ]+([a-zA-Z_$][a-zA-Z_$0-9]*)\(([a-zA-Z_$][a-zA-Z_$0-9]*)(,([a-zA-Z_$][a-zA-
 "/" {printf("LINE=%d TYPE=DIVIDE TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 [0-9]+ {printf("LINE=%d TYPE=INTEGER TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "#"(.*) {printf("LINE=%d TYPE=COMMENT TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
-[ ]+ {}
-\n {linenumber++; indentlevel = 0;}
+\n{2,2} {prevlinenumber = linenumber; linenumber+=2; newline = true; indentlevel=0; numberofspaces = 0;}
+\n{1,1} {prevlinenumber = linenumber; linenumber++; indentlevel=0; numberofspaces = 0;}
 
 %% 
-  
 /*** Code Section***/
 int yywrap(){} 
 int main(){ 
