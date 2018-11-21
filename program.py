@@ -1,10 +1,12 @@
-x = 890000
-y = 1000
+def max(x,y):
+    if x > y:
+        return x
+    else:
+        return y
 
-if x>80000:
-    d = x / y
+def sum(x):
+    if x == 0:
+        return 0
+    return x + sum(x-1)
 
-if x<80000:
-    d = x * y
-
-print("d=",d)
+sum(5)

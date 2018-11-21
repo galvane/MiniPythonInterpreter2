@@ -1,15 +1,19 @@
 #include<iostream>
 #include<fstream>
-#include<stdlib.h>
-#include<string.h>
-#include<ctype.h>
 #include <vector>
 #include <map>
 #include <cmath>
 #include <cstdio>
 #include <set>
 #include <algorithm>
+
+#include<stdlib.h>
+#include<string.h>
+#include<ctype.h>
+
 #include "main.h"
+
+#include "node.h"
 
 using namespace std;
 
@@ -23,34 +27,8 @@ vector<string> split(string str, string delimiter){
         str.erase(0, pos + delimiter.length());
         parameters.push_back(token);
     }
+    parameters.push_back(str);
     return parameters;
-}
-
-// DOUBLY LINKED LIST INSERTION:
-void appendToDLL(struct Node ** head, Scope *newData) {
-    struct Node* newNode = (struct Node*)malloc(sizeof(struct Node));
-
-    struct Node* last = *head;
-
-    newNode->data = newData;
-
-    newNode->next = NULL;
-
-    if (*head == NULL)
-    {
-        newNode->prev = NULL;
-        *head = newNode;
-        return;
-    }
-
-    while (last->next != NULL)
-        last = last->next;
-
-    last->next = newNode;
-
-    newNode->prev = last;
-
-    return;
 }
 
 vector<Token>Token::tokens;
@@ -140,16 +118,6 @@ bool isMutatedvariable(){
 
 }
 
-Scope::Scope(string name, string type){
-    this->name = name;
-    this->type = type;
-}
-void Scope::addVariable(string name, int value){
-    this->variables.insert(pair<string, int>(name, value));
-}
-void Scope::addParameter(string parameter){
-    this->parameters.push_back(parameter);
-}
 
 int main(){
     /* FIRST STEP */
@@ -168,7 +136,7 @@ int main(){
         // CASE: function, we have a head of scope which is the function definition
         if(Token::tokens.at(i).type == "FUNCTION"){
             // create a head of Scope
-            struct Node * head;
+
 
             // finding indexes
             int defIndex = Token::tokens.at(i).content.find("def");
@@ -182,19 +150,19 @@ int main(){
 
             // defining function parameters
             string parameters = Token::tokens.at(i).content.substr(openParanthesisIndex,closeParanthesisIndex-openParanthesisIndex+1);
-            vector<string> functionParameters = split(parameters, ",");
+            vector<string> functionParameters = split(parameters.substr(1,parameters.size()-2), ",");
             // assigned the function its associated parameters
             for(int i = 0; i < functionParameters.size(); i++){
                 functionDef->parameters.push_back(functionParameters.at(i));
             }
 
-            head->data = functionDef;
-            head->prev = NULL;
-            head->next = NULL;
+            struct Node *head = new Node(functionDef);
+//            head->prev = NULL;
+//            head->next = NULL;
             while(Token::tokens.at(j).level>= Token::tokens.at(i).level){
                 if(Token::tokens.at(j).type == "KEYWORD"){
                     Scope *scope = new Scope("", Token::tokens.at(j).type);
-                    appendToDLL(&head, scope);
+                    Node::appendToDLL(&head, scope);
                 }
                 j++;
             }

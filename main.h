@@ -28,23 +28,3 @@ public:
     static void updateTokens(Token token);
     static void createTokenObjs(vector<string> flexInput);
 };
-
-class Scope{
-public:
-    string name;
-    string type;
-    map<string,int> variables;
-    vector<string> parameters;
-
-    Scope(string name, string type);
-    void addVariable(string name, int value);
-    void addParameter(string parameter);
-};
-
-
-/* Node of a doubly linked list */
-struct Node {
-    Scope *data;
-    struct Node* next;
-    struct Node* prev;
-};
