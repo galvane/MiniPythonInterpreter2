@@ -14,7 +14,3 @@ void Scope::addVariable(string name, string value){
 void Scope::addParameter(string parameter){
     this->parameters.push_back(parameter);
 }
-
-//Scope Scope::getTail() {
-//    return
-//}

@@ -21,6 +21,14 @@ using namespace std;
 vector<Token>Token::tokens;
 map<Token, Token>Token::globalVariables;
 
+bool isConditionalStatement(string var1, string comparison, string var2, string colon){
+    return (var1 == "VARIABLE" && var2 == "VARIABLE" && (comparison == "EQUALSCOMPARISON" || comparison == "GREATER_THAN" || comparison == "LESS_THAN") && colon == ":");
+}
+
+bool isReturnStatement(string returnKeyword, string var){
+    return (returnKeyword == "RETURN" && var == "VARIABLE");
+}
+
 vector<string> getFunctionCallValuesToVariables(string functionCall){
     vector<string> paramList_;
     int open_par = functionCall.find("(");
@@ -145,6 +153,12 @@ int main(){
 
                 if(Token::tokens.at(j).type == "KEYWORD"){
                     Scope *scope = new Scope("", Token::tokens.at(j).content);
+                    if(isConditionalStatement(Token::tokens.at(j+1).type, Token::tokens.at(j+2).type, Token::tokens.at(j+3).type, Token::tokens.at(j+4).type) ){
+                        scope->conditionalStatement = Token::tokens.at(j+1).content+Token::tokens.at(j+2).content+Token::tokens.at(j+3).content+Token::tokens.at(j+4).content;
+                    }
+                    if(isReturnStatement(Token::tokens.at(j+5).type, Token::tokens.at(j+6).type)){
+                        scope->returnStatement = Token::tokens.at(j+5).content+Token::tokens.at(j+6).content ;
+                    }
                     Node::appendToDLL(&head, scope);
                 }
 
@@ -162,12 +176,18 @@ int main(){
             vector<Node *>::iterator it = find_if(functionScopes.begin(), functionScopes.end(), [i](Node *n) {
                 return n->data->name == getFunctionNameFromFunctionCall(Token::tokens.at(i).content);
             });
+            // if the function exists
             if(*it !=  NULL){
                 vector<string> params = getFunctionCallValuesToVariables(Token::tokens.at(i).content);
+                // plug in/assign function call values to function paramaters
                 for(int i = 0; i < params.size(); i++){
                     std::map<string, string>::iterator m_it = it.operator*()->data->variables.find(it.operator*()->data->parameters.at(i));
                     m_it->second = params.at(i);
                 }
+            }
+            else{
+                cout << "TypeError: 'int' object is not iterable" << endl;
+                cout << "[INFO] You tried to call a function that hasn't yet been declared/defined." << endl;
             }
         }
             //getFunctionNameFromFunctionCall(Token::tokens.at(i).content))!=functionScopes.end()

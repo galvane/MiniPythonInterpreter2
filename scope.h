@@ -18,6 +18,8 @@ public:
     string type;
     map<string,string> variables;
     vector<string> parameters;
+    string conditionalStatement;
+    string returnStatement;
 
     Scope(string name, string type);
     void addVariable(string name, string value);
