@@ -7,6 +7,7 @@
 #include <set>
 #include <algorithm>
 
+#include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
 #include<ctype.h>
@@ -19,6 +20,20 @@ using namespace std;
 
 vector<Token>Token::tokens;
 map<Token, Token>Token::globalVariables;
+
+vector<string> getFunctionCallValuesToVariables(string functionCall){
+    vector<string> paramList_;
+    int open_par = functionCall.find("(");
+    int close_par = functionCall.find(")");
+    const string paramList = functionCall.substr(open_par+1,close_par-open_par-1);
+    string pL = paramList;
+    while(pL.find(",") != string::npos){
+        paramList_.push_back(pL.substr(0, pL.size()-pL.find(",")));
+        pL = paramList.substr(paramList.find(",")+1, string::npos);
+    }
+    paramList_.push_back(pL);
+    return paramList_;
+}
 
 string getFunctionNameFromFunctionCall(string functionCall){
     int open_par = functionCall.find("(");
@@ -142,10 +157,21 @@ int main(){
             functionScopes.push_back(head);
 
         }
-        if(Token::tokens.at(i).type == "FUNCTIONCALL"){
-            //&& find(functionScopes.begin(), functionScopes.end(),getFunctionNameFromFunctionCall(Token::tokens.at(i).content))!=functionScopes.end()){
 
+        if(Token::tokens.at(i).type == "FUNCTIONCALL") {
+            vector<Node *>::iterator it = find_if(functionScopes.begin(), functionScopes.end(), [i](Node *n) {
+                return n->data->name == getFunctionNameFromFunctionCall(Token::tokens.at(i).content);
+            });
+            if(*it !=  NULL){
+                vector<string> params = getFunctionCallValuesToVariables(Token::tokens.at(i).content);
+                for(int i = 0; i < params.size(); i++){
+                    std::map<string, string>::iterator m_it = it.operator*()->data->variables.find(it.operator*()->data->parameters.at(i));
+                    m_it->second = params.at(i);
+                }
+            }
         }
+            //getFunctionNameFromFunctionCall(Token::tokens.at(i).content))!=functionScopes.end()
+
         // CASE: IF OUTSIDE OF FUNCTION
         // CASE: ELSE OUTSIDE OF FUNCTION
     }
