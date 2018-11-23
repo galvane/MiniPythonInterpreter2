@@ -6,3 +6,21 @@
 #define ORDONEZ_HW4_SCOPE_H
 
 #endif //ORDONEZ_HW4_SCOPE_H
+
+#include <iostream>
+#include <vector>
+#include <map>
+using namespace std;
+
+class Scope{
+public:
+    string name;
+    string type;
+    map<string,string> variables;
+    vector<string> parameters;
+
+    Scope(string name, string type);
+    void addVariable(string name, string value);
+    void addParameter(string parameter);
+    Scope getTail();
+};

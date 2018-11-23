@@ -20,6 +20,15 @@ using namespace std;
 vector<Token>Token::tokens;
 map<Token, Token>Token::globalVariables;
 
+string getFunctionNameFromFunctionCall(string functionCall){
+    int open_par = functionCall.find("(");
+    const string functionName = functionCall.substr(0, open_par);
+    if (functionName.find(" ") != string::npos)
+        return functionName.substr(0, functionName.find(" "));
+    else
+        return functionName;
+}
+
 // split function
 vector<string> split(string str, string delimiter){
     vector<string> parameters;
@@ -110,19 +119,32 @@ int main(){
             // assigned the function its associated parameters
             for(int i = 0; i < functionParameters.size(); i++){
                 functionDef->parameters.push_back(functionParameters.at(i));
+                //functionDef->variables[functionParameters.at(i)] = "";
+                functionDef->variables.insert(pair<string,string>(functionParameters.at(i), ""));
             }
 
             struct Node *head = new Node(functionDef);
-//            head->prev = NULL;
-//            head->next = NULL;
-            while(Token::tokens.at(j).level>= Token::tokens.at(i).level){
+
+            // while we are still inside the function:
+            while(Token::tokens.at(j).level > Token::tokens.at(i).level){
+
                 if(Token::tokens.at(j).type == "KEYWORD"){
-                    Scope *scope = new Scope("", Token::tokens.at(j).type);
+                    Scope *scope = new Scope("", Token::tokens.at(j).content);
                     Node::appendToDLL(&head, scope);
+                }
+
+                //variable assignments
+                if(Token::tokens.at(j).type == "VARIABLE" && Token::tokens.at(j+1).type == "EQUALS"){
+                    functionDef->variables.insert(pair<string,string>(Token::tokens.at(j).content, Token::tokens.at(j+2).content));
                 }
                 j++;
             }
             functionScopes.push_back(head);
+
+        }
+        if(Token::tokens.at(i).type == "FUNCTIONCALL"){
+            //&& find(functionScopes.begin(), functionScopes.end(),getFunctionNameFromFunctionCall(Token::tokens.at(i).content))!=functionScopes.end()){
+
         }
         // CASE: IF OUTSIDE OF FUNCTION
         // CASE: ELSE OUTSIDE OF FUNCTION

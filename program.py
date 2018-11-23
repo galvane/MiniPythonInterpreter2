@@ -3,7 +3,7 @@ def max(x,y):
       return x
    else:
       return y
-
+max(5,1)
 
 def sum(x):
    if x == 0:
