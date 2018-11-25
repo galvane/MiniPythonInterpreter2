@@ -15,8 +15,9 @@ bool newline = false;
 %%
 [" "]{3,3} {indentlevel++;}
 
-(print|(if[ ])|else:) {printf("LINE=%d TYPE=KEYWORD TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
-def[ ]+([a-zA-Z_$][a-zA-Z_$0-9]*)\(([a-zA-Z_$][a-zA-Z_$0-9]*)(,([a-zA-Z_$][a-zA-Z_$0-9]*))*\): {printf("LINE=%d TYPE=FUNCTION TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
+((if[ ])|else:) {printf("LINE=%d TYPE=KEYWORD TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
+print\((.*)\) {printf("LINE=%d TYPE=PRINT_STATEMENT TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
+def[ ]+([a-zA-Z_$][a-zA-Z_$0-9]*)\(([a-zA-Z_$][a-zA-Z_$0-9]*)*(,([a-zA-Z_$][a-zA-Z_$0-9]*))*\): {printf("LINE=%d TYPE=FUNCTION TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
 ([a-zA-Z_$][a-zA-Z_$0-9]*)[" "]*\((.*)\) {printf("LINE=%d TYPE=FUNCTIONCALL TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);} 
 return {printf("LINE=%d TYPE=RETURN TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
 ":" {printf("LINE=%d TYPE=COLON TOKEN=%s LEVEL=%d\n", linenumber, yytext, indentlevel);}
@@ -55,7 +56,7 @@ int main(){
 // to take input from file 
  FILE *fp; 
  //char filename[50]; 
- char filename[50] = "program.py";
+ char filename[50] = "program3.py";
  //printf("Enter the filename: \n"); 
  //scanf("%s", filename); 
  fp = fopen(filename,"r"); 
