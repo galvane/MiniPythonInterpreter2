@@ -14,12 +14,14 @@ using namespace std;
 
 class Scope{
 public:
+    int level;
     string name;
     string type;
     map<string,string> variables;
     vector<string> parameters;
     string conditionalStatement;
     string returnStatement;
+    string elseStatement;
 
     Scope(string name, string type);
     void addVariable(string name, string value);

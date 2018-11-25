@@ -22,11 +22,15 @@ vector<Token>Token::tokens;
 map<Token, Token>Token::globalVariables;
 
 bool isConditionalStatement(string var1, string comparison, string var2, string colon){
-    return (var1 == "VARIABLE" && var2 == "VARIABLE" && (comparison == "EQUALSCOMPARISON" || comparison == "GREATER_THAN" || comparison == "LESS_THAN") && colon == ":");
+    return ( (var1 == "VARIABLE" || var1 == "INTEGER")  && (var2 == "VARIABLE" || var2 == "INTEGER") && (comparison == "EQUALSCOMPARISON" || comparison == "GREATER_THAN" || comparison == "LESS_THAN") && colon == "COLON");
 }
 
-bool isReturnStatement(string returnKeyword, string var){
-    return (returnKeyword == "RETURN" && var == "VARIABLE");
+bool elseStatement(string elseContent){
+    return (elseContent == "else:");
+}
+
+bool isReturnStatement(string returnKeyword){
+    return (returnKeyword == "RETURN");
 }
 
 vector<string> getFunctionCallValuesToVariables(string functionCall){
@@ -150,21 +154,56 @@ int main(){
 
             // while we are still inside the function:
             while(Token::tokens.at(j).level > Token::tokens.at(i).level){
+                int levelSeen = Token::tokens.at(j).level;
 
+                //if or else
                 if(Token::tokens.at(j).type == "KEYWORD"){
-                    Scope *scope = new Scope("", Token::tokens.at(j).content);
-                    if(isConditionalStatement(Token::tokens.at(j+1).type, Token::tokens.at(j+2).type, Token::tokens.at(j+3).type, Token::tokens.at(j+4).type) ){
-                        scope->conditionalStatement = Token::tokens.at(j+1).content+Token::tokens.at(j+2).content+Token::tokens.at(j+3).content+Token::tokens.at(j+4).content;
+                    //need to check if there is already an existing scope we need to add to
+                    if (Token::tokens.at(j).level < levelSeen)
+                    {
+                        //add to appropriate scope instead
                     }
-                    if(isReturnStatement(Token::tokens.at(j+5).type, Token::tokens.at(j+6).type)){
-                        scope->returnStatement = Token::tokens.at(j+5).content+Token::tokens.at(j+6).content ;
+                    //while there is more if/else nesting
+                    while(Token::tokens.at(j).type == "KEYWORD") {
+
+                        Scope *scope = new Scope("", Token::tokens.at(j).content);
+                        scope->level = Token::tokens.at(j).level;
+                        if (isConditionalStatement(Token::tokens.at(j + 1).type, Token::tokens.at(j + 2).type,
+                                                   Token::tokens.at(j + 3).type, Token::tokens.at(j + 4).type)) {
+                            scope->conditionalStatement =
+                                    Token::tokens.at(j + 1).content + Token::tokens.at(j + 2).content +
+                                    Token::tokens.at(j + 3).content + Token::tokens.at(j + 4).content;
+                            j = j + 5;
+                        }
+                        if (elseStatement(Token::tokens.at(j).content)) {
+                            //                            scope->elseStatement =
+                            //                                    Token::tokens.at(j)
+                        }
+                        // return consists of all items on that level
+                        if (isReturnStatement(Token::tokens.at(j).type)) {
+                            int returnLevel = Token::tokens.at(j).level;
+                            string returnStatement = "";
+                            while (returnLevel == Token::tokens.at(j).level) {
+                                returnStatement += Token::tokens.at(j).content;
+                                if (Token::tokens.at(j).type == "RETURN")
+                                    returnStatement += " ";
+                                j++;
+                            }
+                            scope->returnStatement = returnStatement;
+                        }
+                        Node::appendToDLL(&head, scope);
                     }
-                    Node::appendToDLL(&head, scope);
+
                 }
 
                 //variable assignments
                 if(Token::tokens.at(j).type == "VARIABLE" && Token::tokens.at(j+1).type == "EQUALS"){
                     functionDef->variables.insert(pair<string,string>(Token::tokens.at(j).content, Token::tokens.at(j+2).content));
+                }
+
+                //recursive --> another function call
+                if(Token::tokens.at(j).type == "FUNCTIONCALL"){
+
                 }
                 j++;
             }
