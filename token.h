@@ -5,8 +5,6 @@
 #ifndef ORDONEZ_HW4_TOKEN_H
 #define ORDONEZ_HW4_TOKEN_H
 
-#endif //ORDONEZ_HW4_TOKEN_H
-
 #include <iostream>
 #include <vector>
 #include<map>
@@ -27,3 +25,5 @@ public:
     static void updateTokens(Token token);
     static void createTokenObjs(vector<string> flexInput);
 };
+
+#endif //ORDONEZ_HW4_TOKEN_H

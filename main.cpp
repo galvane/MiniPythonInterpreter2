@@ -159,26 +159,28 @@ int main(){
                 //if or else
                 if(Token::tokens.at(j).type == "KEYWORD"){
                     //need to check if there is already an existing scope we need to add to
-                    if (Token::tokens.at(j).level < levelSeen)
+                    if (Token::tokens.at(j).level < levelSeen && Token::tokens.at(j).type == "KEYWORD")
                     {
                         //add to appropriate scope instead
+                        //this is for evaluation
                     }
                     //while there is more if/else nesting
                     while(Token::tokens.at(j).type == "KEYWORD") {
 
                         Scope *scope = new Scope("", Token::tokens.at(j).content);
                         scope->level = Token::tokens.at(j).level;
+
                         if (isConditionalStatement(Token::tokens.at(j + 1).type, Token::tokens.at(j + 2).type,
                                                    Token::tokens.at(j + 3).type, Token::tokens.at(j + 4).type)) {
                             scope->conditionalStatement =
                                     Token::tokens.at(j + 1).content + Token::tokens.at(j + 2).content +
                                     Token::tokens.at(j + 3).content + Token::tokens.at(j + 4).content;
+                            //scope->token = &Token::tokens.at(j);
                             j = j + 5;
                         }
                         if (elseStatement(Token::tokens.at(j).content)) {
-                            //                            scope->elseStatement =
-                            //                                    Token::tokens.at(j)
                         }
+
                         // return consists of all items on that level
                         if (isReturnStatement(Token::tokens.at(j).type)) {
                             int returnLevel = Token::tokens.at(j).level;
@@ -191,6 +193,12 @@ int main(){
                             }
                             scope->returnStatement = returnStatement;
                         }
+
+                        if(Token::tokens.at(j).type == "PRINT_STATEMENT" && Token::tokens.at(j).level >= levelSeen){
+                            scope->printStatement = Token::tokens.at(j).content;
+
+                        }
+                        levelSeen = Token::tokens.at(j).level;
                         Node::appendToDLL(&head, scope);
                     }
 
