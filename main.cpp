@@ -21,6 +21,25 @@ using namespace std;
 vector<Token>Token::tokens;
 map<Token, Token>Token::globalVariables;
 
+bool check_if(int i)
+{
+    string if_statement = Token::tokens.at(i).content;
+    int if_index = if_statement.find("if ");
+    int colon_index = if_statement.find(":");
+    string condition = if_statement.substr(if_index+1, colon_index-if_index);
+
+    int comp_index;
+    if(condition.find("==")){
+
+    }
+    else if (condition.find(">")){
+
+    }
+    else { //()condition.find("<")
+
+    }
+}
+
 bool isConditionalStatement(string var1, string comparison, string var2, string colon){
     return ( (var1 == "VARIABLE" || var1 == "INTEGER")  && (var2 == "VARIABLE" || var2 == "INTEGER") && (comparison == "EQUALSCOMPARISON" || comparison == "GREATER_THAN" || comparison == "LESS_THAN") && colon == "COLON");
 }
@@ -221,6 +240,11 @@ int main(){
             //while still inside the function
             while(Token::tokens.at(i).level > functionDef->level){
                 int current_line = Token::tokens.at(i).line;
+
+
+                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                //CASE:
+                // Variable Assignment
                 if(isVariableAssignment(i)){
                     string value = performAssignment(i+2, functionDef, current_line);
                     functionDef->addVariable(Token::tokens.at(i).content, value);
@@ -229,6 +253,36 @@ int main(){
                 while(Token::tokens.at(i).line==current_line){
                     i++;
                 }
+
+
+                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                //CASE:
+                //IF
+                bool if_result = false;
+                if(Token::tokens.at(i).content.find("if")!=string::npos){
+                    if_result = check_if(i);
+                    if(if_result == true){
+                        i = i + 1;
+                    }
+
+                }
+
+
+                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                //CASE:
+                //ELSE
+
+                if( (Token::tokens.at(i).content.find("else")!=string::npos) && (if_result == false) ){
+
+                }
+
+                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                //CASE
+                //RETURN
+
+                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                //CASE
+                //PRINT
 
             }
 
