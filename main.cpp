@@ -33,6 +33,56 @@ bool isReturnStatement(string returnKeyword){
     return (returnKeyword == "RETURN");
 }
 
+string performAssignment(int i, Scope *scope, int assignmentLine){
+    bool arithmetic = false;
+    vector<string> thingsToAssign;
+
+    while(Token::tokens.at(i).line == assignmentLine){
+        string line = Token::tokens.at(i).content;
+
+
+        if(line.find("*")!= string::npos || line.find("+")!= string::npos || line.find("/")!= string::npos || line.find("-")!=string::npos){
+            arithmetic = true;
+        }
+        // if rhs assignment exists --> store it as its value (integer)
+        if(scope->variables.find(line)!=scope->variables.end()){
+            thingsToAssign.push_back(scope->variables.at(line));
+        } else
+            thingsToAssign.push_back(line);
+        i++;
+    }
+    if(arithmetic){
+        return do_arithmetic(thingsToAssign);
+    } else
+        return thingsToAssign[0];
+}
+
+//helper function for performAssignment()
+string do_arithmetic(vector<string> arstr){
+
+    int result = 0;
+    for(int i = 0; i < arstr.size()-1;i++){
+
+        if(arstr.at(i) == "*"){
+           result = result * stoi(arstr.at(i+1));
+        }
+        else if(arstr.at(i) == "+" ){
+            result = result + stoi(arstr.at(i+1));
+        }
+        else if(arstr.at(i) == "/"){
+            result = result / stoi(arstr.at(i+1));
+        }
+        else if(arstr.at(i) == "-"){
+            result = result - stoi(arstr.at(i+1));
+        }
+        else{
+            result = result + stoi(arstr.at(i));
+        }
+    }
+    return to_string(result);
+
+}
+
 vector<string> getFunctionCallValuesToVariables(string functionCall){
     vector<string> paramList_;
     int open_par = functionCall.find("(");
@@ -104,7 +154,7 @@ void recognizeScopes(){
 }
 
 bool isVariableAssignment(int i){
-    return (Token::tokens.at(i).type == ("VARIABLE") && Token::tokens.at(i+1).type == ("EQUALS") && Token::tokens.at(i+2).type!=("EQUALS"));
+    return (Token::tokens.at(i).type == "VARIABLE" && Token::tokens.at(i+1).type == "EQUALS" && (Token::tokens.at(i+2).type=="INTEGER" || Token::tokens.at(i+2).type=="VARIABLE"));
 }
 
 bool isMutatedvariable(){
@@ -125,10 +175,25 @@ int main(){
     for(int i = 0; i < Token::tokens.size()-2; i++){
         int j = i + 1;
 
+        if(Token::tokens.at(i).type == "KEYWORD" && (Token::tokens.at(i).content.find("if")!=string::npos)){
+            Scope *ifStatement = new Scope("","if");
+            ifStatement->token = &Token::tokens.at(i);
+            ifStatement->line = Token::tokens.at(i).line;
+            if(isConditionalStatement(Token::tokens.at(i + 1).type, Token::tokens.at(i + 2).type,
+                                      Token::tokens.at(i + 3).type, Token::tokens.at(i + 4).type)){
+                ifStatement->conditionalStatement =
+                        Token::tokens.at(i + 1).content + Token::tokens.at(i + 2).content +
+                        Token::tokens.at(i + 3).content + Token::tokens.at(i + 4).content;
+                i = i+5;
+            }else{
+                cout << "Not a valid conditional statement after \"if\"";
+            }
+        }
+
         // CASE: function, we have a head of scope which is the function definition
         if(Token::tokens.at(i).type == "FUNCTION"){
-            // create a head of Scope
 
+            // create a head of Scope
 
             // finding indexes
             int defIndex = Token::tokens.at(i).content.find("def");
@@ -139,82 +204,100 @@ int main(){
 
             // defining scope
             Scope *functionDef = new Scope(Token::tokens.at(i).content.substr(functionNameIndexStart, functionNameIndexEnd - functionNameIndexStart+1), "FUNCTION");
-
             // defining function parameters
             string parameters = Token::tokens.at(i).content.substr(openParanthesisIndex,closeParanthesisIndex-openParanthesisIndex+1);
             vector<string> functionParameters = split(parameters.substr(1,parameters.size()-2), ",");
             // assigned the function its associated parameters
-            for(int i = 0; i < functionParameters.size(); i++){
+            for(int i = 0; i < functionParameters.size() && parameters!="()"; i++){
                 functionDef->parameters.push_back(functionParameters.at(i));
                 //functionDef->variables[functionParameters.at(i)] = "";
                 functionDef->variables.insert(pair<string,string>(functionParameters.at(i), ""));
             }
+            functionDef->line = Token::tokens.at(i).line;
+            functionDef->level = Token::tokens.at(i).level;
+            functionDef->token = &Token::tokens.at(i);
+
+            i = i + 1; //move forward
+            //while still inside the function
+            while(Token::tokens.at(i).level > functionDef->level){
+                int current_line = Token::tokens.at(i).line;
+                if(isVariableAssignment(i)){
+                    string value = performAssignment(i+2, functionDef, current_line);
+                    functionDef->addVariable(Token::tokens.at(i).content, value);
+                }
+
+                while(Token::tokens.at(i).line==current_line){
+                    i++;
+                }
+
+            }
+
 
             struct Node *head = new Node(functionDef);
 
-            // while we are still inside the function:
-            while(Token::tokens.at(j).level > Token::tokens.at(i).level){
-                int levelSeen = Token::tokens.at(j).level;
-
-                //if or else
-                if(Token::tokens.at(j).type == "KEYWORD"){
-                    //need to check if there is already an existing scope we need to add to
-                    if (Token::tokens.at(j).level < levelSeen && Token::tokens.at(j).type == "KEYWORD")
-                    {
-                        //add to appropriate scope instead
-                        //this is for evaluation
-                    }
-                    //while there is more if/else nesting
-                    while(Token::tokens.at(j).type == "KEYWORD") {
-
-                        Scope *scope = new Scope("", Token::tokens.at(j).content);
-                        scope->level = Token::tokens.at(j).level;
-
-                        if (isConditionalStatement(Token::tokens.at(j + 1).type, Token::tokens.at(j + 2).type,
-                                                   Token::tokens.at(j + 3).type, Token::tokens.at(j + 4).type)) {
-                            scope->conditionalStatement =
-                                    Token::tokens.at(j + 1).content + Token::tokens.at(j + 2).content +
-                                    Token::tokens.at(j + 3).content + Token::tokens.at(j + 4).content;
-                            //scope->token = &Token::tokens.at(j);
-                            j = j + 5;
-                        }
-                        if (elseStatement(Token::tokens.at(j).content)) {
-                        }
-
-                        // return consists of all items on that level
-                        if (isReturnStatement(Token::tokens.at(j).type)) {
-                            int returnLevel = Token::tokens.at(j).level;
-                            string returnStatement = "";
-                            while (returnLevel == Token::tokens.at(j).level) {
-                                returnStatement += Token::tokens.at(j).content;
-                                if (Token::tokens.at(j).type == "RETURN")
-                                    returnStatement += " ";
-                                j++;
-                            }
-                            scope->returnStatement = returnStatement;
-                        }
-
-                        if(Token::tokens.at(j).type == "PRINT_STATEMENT" && Token::tokens.at(j).level >= levelSeen){
-                            scope->printStatement = Token::tokens.at(j).content;
-
-                        }
-                        levelSeen = Token::tokens.at(j).level;
-                        Node::appendToDLL(&head, scope);
-                    }
-
-                }
-
-                //variable assignments
-                if(Token::tokens.at(j).type == "VARIABLE" && Token::tokens.at(j+1).type == "EQUALS"){
-                    functionDef->variables.insert(pair<string,string>(Token::tokens.at(j).content, Token::tokens.at(j+2).content));
-                }
-
-                //recursive --> another function call
-                if(Token::tokens.at(j).type == "FUNCTIONCALL"){
-
-                }
-                j++;
-            }
+//            // while we are still inside the function:
+//            while(Token::tokens.at(j).level > Token::tokens.at(i).level){
+//                int levelSeen = Token::tokens.at(j).level;
+//
+//                //if or else
+//                if(Token::tokens.at(j).type == "KEYWORD"){
+//                    //need to check if there is already an existing scope we need to add to
+//                    if (Token::tokens.at(j).level < levelSeen && Token::tokens.at(j).type == "KEYWORD")
+//                    {
+//                        //add to appropriate scope instead
+//                        //this is for evaluation
+//                    }
+//                    //while there is more if/else nesting
+//                    while(Token::tokens.at(j).type == "KEYWORD") {
+//
+//                        Scope *scope = new Scope("", Token::tokens.at(j).content);
+//                        scope->level = Token::tokens.at(j).level;
+//
+//                        if (isConditionalStatement(Token::tokens.at(j + 1).type, Token::tokens.at(j + 2).type,
+//                                                   Token::tokens.at(j + 3).type, Token::tokens.at(j + 4).type)) {
+//                            scope->conditionalStatement =
+//                                    Token::tokens.at(j + 1).content + Token::tokens.at(j + 2).content +
+//                                    Token::tokens.at(j + 3).content + Token::tokens.at(j + 4).content;
+//                            //scope->token = &Token::tokens.at(j);
+//                            j = j + 5;
+//                        }
+//                        if (elseStatement(Token::tokens.at(j).content)) {
+//                        }
+//
+//                        // return consists of all items on that level
+//                        if (isReturnStatement(Token::tokens.at(j).type)) {
+//                            int returnLevel = Token::tokens.at(j).level;
+//                            string returnStatement = "";
+//                            while (returnLevel == Token::tokens.at(j).level) {
+//                                returnStatement += Token::tokens.at(j).content;
+//                                if (Token::tokens.at(j).type == "RETURN")
+//                                    returnStatement += " ";
+//                                j++;
+//                            }
+//                            scope->returnStatement = returnStatement;
+//                        }
+//
+//                        if(Token::tokens.at(j).type == "PRINT_STATEMENT" && Token::tokens.at(j).level >= levelSeen){
+//                            scope->printStatement = Token::tokens.at(j).content;
+//
+//                        }
+//                        levelSeen = Token::tokens.at(j).level;
+//                        Node::appendToDLL(&head, scope);
+//                    }
+//
+//                }
+//
+//                //variable assignments
+//                if(Token::tokens.at(j).type == "VARIABLE" && Token::tokens.at(j+1).type == "EQUALS"){
+//                    functionDef->variables.insert(pair<string,string>(Token::tokens.at(j).content, Token::tokens.at(j+2).content));
+//                }
+//
+//                //recursive --> another function call
+//                if(Token::tokens.at(j).type == "FUNCTIONCALL"){
+//
+//                }
+//                j++;
+//            }
             functionScopes.push_back(head);
 
         }

@@ -11,7 +11,9 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include "scope.h"
 
 using namespace std;
 
-
+static string do_arithmetic(vector<string>);
+static string performAssignment(int, Scope*, int);

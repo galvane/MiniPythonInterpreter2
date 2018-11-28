@@ -16,6 +16,7 @@ using namespace std;
 
 class Scope{
 public:
+    int line;
     int level;
     string name;
     string type;
