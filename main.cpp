@@ -78,6 +78,14 @@ bool check_if(int i, Scope *scope)
     }
 }
 
+void set_else_i(int i){
+    else_index = i;
+}
+
+int get_else_i(){
+    return else_index;
+}
+
 bool isConditionalStatement(string var1, string comparison, string var2, string colon){
     return ( (var1 == "VARIABLE" || var1 == "INTEGER")  && (var2 == "VARIABLE" || var2 == "INTEGER") && (comparison == "EQUALSCOMPARISON" || comparison == "GREATER_THAN" || comparison == "LESS_THAN") && colon == "COLON");
 }
@@ -302,9 +310,13 @@ int main(){
                 //IF
                 bool if_result = false;
                 if(Token::tokens.at(i).content.find("if")!=string::npos){
+                    //TODO: count to make sure total number of else's is not greater than total number of if's
                     if_result = check_if(i, functionDef);
                     if(if_result == true){
-                        i = i + 1;
+                        i = i + 1; // move to inside the if
+                    }else{
+                        // go to else
+
                     }
 
                 }
