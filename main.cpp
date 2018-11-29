@@ -21,22 +21,60 @@ using namespace std;
 vector<Token>Token::tokens;
 map<Token, Token>Token::globalVariables;
 
-bool check_if(int i)
+bool check_if(int i, Scope *scope)
 {
-    string if_statement = Token::tokens.at(i).content;
-    int if_index = if_statement.find("if ");
-    int colon_index = if_statement.find(":");
-    string condition = if_statement.substr(if_index+1, colon_index-if_index);
+    string if_keyword = Token::tokens.at(i).content;  i++;
 
+    // this program only compares integers
+    int num1_index;
+    int num2_index;
     int comp_index;
-    if(condition.find("==")){
+
+    if(Token::tokens.at(i).content == "OPEN_PARENTHESIS") {
+        //op_index is  i;
+        num1_index = i+1;
+        comp_index = i+2;
+        num2_index = i+3;
+        //cp_index is i+4
+    } else{
+        num1_index = i;
+        comp_index = i+1;
+        num2_index = i+2;
+    }
+    // integers we are comparing
+    int num1; int num2;
+    //get num1 and num2
+    if(Token::tokens.at(num1_index).type == "INTEGER")
+        num1 = stoi(Token::tokens.at(num1_index).content);
+    else{
+        //VARIABLE
+        if(scope->variables.find(Token::tokens.at(num1_index).content)!=scope->variables.end()){
+            num1 = stoi(scope->variables.at(Token::tokens.at(num1_index).content));
+        }
+    }
+
+    if(Token::tokens.at(num2_index).type == "INTEGER")
+        num2 = stoi(Token::tokens.at(num2_index).content);
+    else{
+        //VARIABLE
+        if(scope->variables.find(Token::tokens.at(num2_index).content)!=scope->variables.end()){
+            num2 = stoi(scope->variables.at(Token::tokens.at(num2_index).content));
+        }
+    }
+
+    if(Token::tokens.at(comp_index).type == "EQUALSCOMPARISON"){
+        return  (num1 == num2);
+    }
+    else if (Token::tokens.at(comp_index).type == "GREATER_THAN"){
+        return (num1 > num2);
 
     }
-    else if (condition.find(">")){
-
+    else if(Token::tokens.at(comp_index).type == "LESS__THAN"){
+        return (num1 < num2);
     }
-    else { //()condition.find("<")
-
+    else{
+        //!= case
+        return (num1 != num2);
     }
 }
 
@@ -84,15 +122,19 @@ string do_arithmetic(vector<string> arstr){
 
         if(arstr.at(i) == "*"){
            result = result * stoi(arstr.at(i+1));
+           i++;
         }
         else if(arstr.at(i) == "+" ){
             result = result + stoi(arstr.at(i+1));
+            i++;
         }
         else if(arstr.at(i) == "/"){
             result = result / stoi(arstr.at(i+1));
+            i++;
         }
         else if(arstr.at(i) == "-"){
             result = result - stoi(arstr.at(i+1));
+            i++;
         }
         else{
             result = result + stoi(arstr.at(i));
@@ -260,7 +302,7 @@ int main(){
                 //IF
                 bool if_result = false;
                 if(Token::tokens.at(i).content.find("if")!=string::npos){
-                    if_result = check_if(i);
+                    if_result = check_if(i, functionDef);
                     if(if_result == true){
                         i = i + 1;
                     }

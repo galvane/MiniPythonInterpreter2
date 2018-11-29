@@ -17,3 +17,4 @@ using namespace std;
 
 static string do_arithmetic(vector<string>);
 static string performAssignment(int, Scope*, int);
+bool check_if(int, Scope*);
