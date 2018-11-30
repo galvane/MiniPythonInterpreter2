@@ -270,14 +270,20 @@ int scope_engine(int i, Scope* scope)
             if_result = check_if(i, scope);
             if(if_result == true){
                 //i = i + 1; // move to inside the if
-                return scope_engine(i+1, new Scope("","if"));
+                Scope * scope1 = new Scope("","if");
+                scope1->level = Token::tokens.at(i).level;
+                scope1->line = Token::tokens.at(i).line;
+                return scope_engine(i+1, scope1);
             }else
                 {
                 // go to else
                 for(int t = i; t < Token::tokens.size(); t++){
-                    if((Token::tokens.at(t).content.find("else:") == string::npos) && Token::tokens.at(t).level == if_level){
+                    if((Token::tokens.at(t).content.find("else:") != string::npos) && Token::tokens.at(t).level == if_level){
                         //i = t;
-                        return scope_engine(t+1, new Scope("", "else"));
+                        Scope * scope1 = new Scope("","else");
+                        scope1->level = Token::tokens.at(t).level;
+                        scope1->line = Token::tokens.at(t).line;
+                        return scope_engine(t+1, scope1);
                     }
 
                 }
