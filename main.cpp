@@ -231,17 +231,6 @@ bool isMutatedvariable(){
 
 int scope_engine(int i, Scope* scope)
 {
-    if(Token::tokens.at(i).type == "RETURN"){
-        int current_line = Token::tokens.at(i).line;
-        while(Token::tokens.at(i).line==current_line){
-            i++;
-        }
-        if(scope->variables.find(Token::tokens.at(i).content)!=scope->variables.end()){
-            return stoi(scope->variables.at(Token::tokens.at(i).content));
-        }else
-            return stoi(Token::tokens.at(i).content);
-    }
-
     //while inside the scope
     while(Token::tokens.at(i).level+1 > scope->level){
         int current_line = Token::tokens.at(i).line;
@@ -259,7 +248,6 @@ int scope_engine(int i, Scope* scope)
             i++;
         }
 
-
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         //CASE:
         //IF
@@ -273,17 +261,20 @@ int scope_engine(int i, Scope* scope)
                 Scope * scope1 = new Scope("","if");
                 scope1->level = Token::tokens.at(i).level;
                 scope1->line = Token::tokens.at(i).line;
-                return scope_engine(i+1, scope1);
+                return scope_engine(i, scope1);
+                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                //CASE:
+                //ELSE
             }else
                 {
                 // go to else
                 for(int t = i; t < Token::tokens.size(); t++){
                     if((Token::tokens.at(t).content.find("else:") != string::npos) && Token::tokens.at(t).level == if_level){
-                        //i = t;
+                        i = t;
                         Scope * scope1 = new Scope("","else");
-                        scope1->level = Token::tokens.at(t).level;
-                        scope1->line = Token::tokens.at(t).line;
-                        return scope_engine(t+1, scope1);
+                        scope1->level = Token::tokens.at(i).level;
+                        scope1->line = Token::tokens.at(i).line;
+                        return scope_engine(i, scope1);
                     }
 
                 }
@@ -293,22 +284,25 @@ int scope_engine(int i, Scope* scope)
 
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        //CASE:
-        //ELSE
-
-        if( (Token::tokens.at(i).content.find("else")!=string::npos) && (if_result == false) ){
-
-        }
+        //CASE
+        //PRINT
 
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
         //CASE
         //RETURN
-
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        //CASE
-        //PRINT
-
+        if(Token::tokens.at(i).type == "RETURN"){
+            int current_line = Token::tokens.at(i).line;
+            while(Token::tokens.at(i).line==current_line){
+                i =i+1;
+                if(scope->variables.find(Token::tokens.at(i).content)!=scope->variables.end()){
+                    return stoi(scope->variables.at(Token::tokens.at(i).content));
+                }else
+                    return stoi(Token::tokens.at(i).content);
+                i++;
+            }
+        }
     }
+
 
 }
 
@@ -371,7 +365,8 @@ int main(){
             i = i + 1; //move forward
 
             //perform all needed tasks inside of function
-            scope_engine(i, functionDef);
+            int return_value = scope_engine(i, functionDef);
+            cout << return_value;
 
 
             struct Node *head = new Node(functionDef);
