@@ -227,6 +227,82 @@ bool isVariableAssignment(int i){
 }
 
 bool isMutatedvariable(){
+}
+
+int scope_engine(int i, Scope* scope)
+{
+    if(Token::tokens.at(i).type == "RETURN"){
+        int current_line = Token::tokens.at(i).line;
+        while(Token::tokens.at(i).line==current_line){
+            i++;
+        }
+        if(scope->variables.find(Token::tokens.at(i).content)!=scope->variables.end()){
+            return stoi(scope->variables.at(Token::tokens.at(i).content));
+        }else
+            return stoi(Token::tokens.at(i).content);
+    }
+
+    //while inside the scope
+    while(Token::tokens.at(i).level+1 > scope->level){
+        int current_line = Token::tokens.at(i).line;
+
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CASE:
+        // Variable Assignment
+        if(isVariableAssignment(i)){
+            string value = performAssignment(i+2, scope, current_line);
+            scope->addVariable(Token::tokens.at(i).content, value);
+        }
+
+        while(Token::tokens.at(i).line==current_line){
+            i++;
+        }
+
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CASE:
+        //IF
+        bool if_result = false;
+        int if_level = Token::tokens.at(i).level;
+        if(Token::tokens.at(i).content.find("if")!=string::npos){
+            //TODO: count to make sure total number of else's is not greater than total number of if's
+            if_result = check_if(i, scope);
+            if(if_result == true){
+                //i = i + 1; // move to inside the if
+                return scope_engine(i+1, new Scope("","if"));
+            }else
+                {
+                // go to else
+                for(int t = i; t < Token::tokens.size(); t++){
+                    if((Token::tokens.at(t).content.find("else:") == string::npos) && Token::tokens.at(t).level == if_level){
+                        //i = t;
+                        return scope_engine(t+1, new Scope("", "else"));
+                    }
+
+                }
+            }
+
+        }
+
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CASE:
+        //ELSE
+
+        if( (Token::tokens.at(i).content.find("else")!=string::npos) && (if_result == false) ){
+
+        }
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CASE
+        //RETURN
+
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CASE
+        //PRINT
+
+    }
 
 }
 
@@ -287,58 +363,9 @@ int main(){
             functionDef->token = &Token::tokens.at(i);
 
             i = i + 1; //move forward
-            //while still inside the function
-            while(Token::tokens.at(i).level > functionDef->level){
-                int current_line = Token::tokens.at(i).line;
 
-
-                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                //CASE:
-                // Variable Assignment
-                if(isVariableAssignment(i)){
-                    string value = performAssignment(i+2, functionDef, current_line);
-                    functionDef->addVariable(Token::tokens.at(i).content, value);
-                }
-
-                while(Token::tokens.at(i).line==current_line){
-                    i++;
-                }
-
-
-                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                //CASE:
-                //IF
-                bool if_result = false;
-                if(Token::tokens.at(i).content.find("if")!=string::npos){
-                    //TODO: count to make sure total number of else's is not greater than total number of if's
-                    if_result = check_if(i, functionDef);
-                    if(if_result == true){
-                        i = i + 1; // move to inside the if
-                    }else{
-                        // go to else
-
-                    }
-
-                }
-
-
-                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                //CASE:
-                //ELSE
-
-                if( (Token::tokens.at(i).content.find("else")!=string::npos) && (if_result == false) ){
-
-                }
-
-                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                //CASE
-                //RETURN
-
-                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                //CASE
-                //PRINT
-
-            }
+            //perform all needed tasks inside of function
+            scope_engine(i, functionDef);
 
 
             struct Node *head = new Node(functionDef);
