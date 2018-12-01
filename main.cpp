@@ -20,6 +20,7 @@ using namespace std;
 
 vector<Token>Token::tokens;
 map<Token, Token>Token::globalVariables;
+map<string, int>available_functions; //map function name to starting line where it is defined
 
 bool check_if(int i, Scope *scope)
 {
@@ -222,6 +223,10 @@ void recognizeScopes(){
     }
 }
 
+bool isfunctioncallAssignment(int i){
+    return (Token::tokens.at(i).type == "VARIABLE" && Token::tokens.at(i+1).type == "EQUALS" && Token::tokens.at(i+2).type=="FUNCTIONCALL");
+}
+
 bool isVariableAssignment(int i){
     return (Token::tokens.at(i).type == "VARIABLE" && Token::tokens.at(i+1).type == "EQUALS" && (Token::tokens.at(i+2).type=="INTEGER" || Token::tokens.at(i+2).type=="VARIABLE"));
 }
@@ -348,7 +353,7 @@ int main(){
             int functionNameIndexEnd = openParanthesisIndex-1;
 
             // defining scope
-            Scope *functionDef = new Scope(Token::tokens.at(i).content.substr(functionNameIndexStart, functionNameIndexEnd - functionNameIndexStart+1), "FUNCTION");
+            Scope *functionDef = new Scope(Token::tokens.at(i).content.substr(functionNameIndexStart, functionNameIndexEnd - functionNameIndexStart+1), "FUNCTION"); // +1 to make up for index 0
             // defining function parameters
             string parameters = Token::tokens.at(i).content.substr(openParanthesisIndex,closeParanthesisIndex-openParanthesisIndex+1);
             vector<string> functionParameters = split(parameters.substr(1,parameters.size()-2), ",");
@@ -361,82 +366,38 @@ int main(){
             functionDef->line = Token::tokens.at(i).line;
             functionDef->level = Token::tokens.at(i).level;
             functionDef->token = &Token::tokens.at(i);
+            functionDef->lexer_line = i;
 
             i = i + 1; //move forward
 
-            //perform all needed tasks inside of function
-            int return_value = scope_engine(i, functionDef);
-            cout << return_value;
+            // store function name and skip function def until FUNCTIONCALL
+            //FUNCTION: line number, number of parameters, name
 
+            while(functionDef->level  <  Token::tokens.at(i).level){
+                i++; //skip entire function
+            }
 
             struct Node *head = new Node(functionDef);
-
-//            // while we are still inside the function:
-//            while(Token::tokens.at(j).level > Token::tokens.at(i).level){
-//                int levelSeen = Token::tokens.at(j).level;
-//
-//                //if or else
-//                if(Token::tokens.at(j).type == "KEYWORD"){
-//                    //need to check if there is already an existing scope we need to add to
-//                    if (Token::tokens.at(j).level < levelSeen && Token::tokens.at(j).type == "KEYWORD")
-//                    {
-//                        //add to appropriate scope instead
-//                        //this is for evaluation
-//                    }
-//                    //while there is more if/else nesting
-//                    while(Token::tokens.at(j).type == "KEYWORD") {
-//
-//                        Scope *scope = new Scope("", Token::tokens.at(j).content);
-//                        scope->level = Token::tokens.at(j).level;
-//
-//                        if (isConditionalStatement(Token::tokens.at(j + 1).type, Token::tokens.at(j + 2).type,
-//                                                   Token::tokens.at(j + 3).type, Token::tokens.at(j + 4).type)) {
-//                            scope->conditionalStatement =
-//                                    Token::tokens.at(j + 1).content + Token::tokens.at(j + 2).content +
-//                                    Token::tokens.at(j + 3).content + Token::tokens.at(j + 4).content;
-//                            //scope->token = &Token::tokens.at(j);
-//                            j = j + 5;
-//                        }
-//                        if (elseStatement(Token::tokens.at(j).content)) {
-//                        }
-//
-//                        // return consists of all items on that level
-//                        if (isReturnStatement(Token::tokens.at(j).type)) {
-//                            int returnLevel = Token::tokens.at(j).level;
-//                            string returnStatement = "";
-//                            while (returnLevel == Token::tokens.at(j).level) {
-//                                returnStatement += Token::tokens.at(j).content;
-//                                if (Token::tokens.at(j).type == "RETURN")
-//                                    returnStatement += " ";
-//                                j++;
-//                            }
-//                            scope->returnStatement = returnStatement;
-//                        }
-//
-//                        if(Token::tokens.at(j).type == "PRINT_STATEMENT" && Token::tokens.at(j).level >= levelSeen){
-//                            scope->printStatement = Token::tokens.at(j).content;
-//
-//                        }
-//                        levelSeen = Token::tokens.at(j).level;
-//                        Node::appendToDLL(&head, scope);
-//                    }
-//
-//                }
-//
-//                //variable assignments
-//                if(Token::tokens.at(j).type == "VARIABLE" && Token::tokens.at(j+1).type == "EQUALS"){
-//                    functionDef->variables.insert(pair<string,string>(Token::tokens.at(j).content, Token::tokens.at(j+2).content));
-//                }
-//
-//                //recursive --> another function call
-//                if(Token::tokens.at(j).type == "FUNCTIONCALL"){
-//
-//                }
-//                j++;
-//            }
             functionScopes.push_back(head);
+        }
+
+        /*int return_value;
+        if(Token::tokens.at(i).type == "FUNCTIONCALL" || ){
+            string function_name = Token::tokens.at(i).
+            //perform al operations not belonging to a function
+            return_value = scope_engine(i, functionDef);
+        }
+        else if (isfunctioncallAssignment(int i)){
 
         }
+
+
+        else{
+            //perform all needed tasks inside of function
+        }
+
+        cout << return_value;
+         */
 
         if(Token::tokens.at(i).type == "FUNCTIONCALL") {
             vector<Node *>::iterator it = find_if(functionScopes.begin(), functionScopes.end(), [i](Node *n) {
@@ -446,10 +407,13 @@ int main(){
             if(*it !=  NULL){
                 vector<string> params = getFunctionCallValuesToVariables(Token::tokens.at(i).content);
                 // plug in/assign function call values to function paramaters
-                for(int i = 0; i < params.size(); i++){
+                for(int i = 0; i < params.size() && params[0]!=""; i++){
                     std::map<string, string>::iterator m_it = it.operator*()->data->variables.find(it.operator*()->data->parameters.at(i));
                     m_it->second = params.at(i);
                 }
+                //call function
+                int return_value = scope_engine(it.operator*()->data->lexer_line, it.operator*()->data);
+                cout << return_value;
             }
             else{
                 cout << "TypeError: 'int' object is not iterable" << endl;

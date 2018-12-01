@@ -9,6 +9,7 @@ def f():
       m = 50
    return m
 
+f()
 x = f()
 
 if x!=1000:
