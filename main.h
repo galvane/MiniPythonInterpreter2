@@ -15,6 +15,16 @@
 
 using namespace std;
 
-static string do_arithmetic(vector<string>);
-static string performAssignment(int, Scope*, int);
+class Main {
+public:
+    static Scope *globalScope;
+    static map<string, string>globalVariables;
+
+    static string do_arithmetic(vector<string>);
+
+    static string performAssignment(int, Scope *, int);
+};
+
 bool check_if(int, Scope*);
+int else_index;
+bool isfunctioncallAssignment(int);

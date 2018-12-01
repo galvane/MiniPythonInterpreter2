@@ -19,7 +19,7 @@
 using namespace std;
 
 vector<Token>Token::tokens;
-map<Token, Token>Token::globalVariables;
+Scope* globalScope = new Scope("","global");
 map<string, int>available_functions; //map function name to starting line where it is defined
 
 bool check_if(int i, Scope *scope)
@@ -118,13 +118,13 @@ string performAssignment(int i, Scope *scope, int assignmentLine){
         i++;
     }
     if(arithmetic){
-        return do_arithmetic(thingsToAssign);
+        return Main::do_arithmetic(thingsToAssign);
     } else
         return thingsToAssign[0];
 }
 
 //helper function for performAssignment()
-string do_arithmetic(vector<string> arstr){
+string Main::do_arithmetic(vector<string> arstr){
 
     int result = 0;
     for(int i = 0; i < arstr.size()-1;i++){
@@ -319,6 +319,10 @@ int scope_engine(int i, Scope* scope)
 }
 
 int main(){
+    //instantiate global variables
+    globalScope->variables = Main::globalVariables;
+
+
     /* FIRST STEP */
     //get flex input
     vector<string> flexInput = getFlexInput();
@@ -406,6 +410,7 @@ int main(){
         cout << return_value;
          */
 
+        // TODO: cover for functioncall assignment to variable
         if(Token::tokens.at(i).type == "FUNCTIONCALL") {
             vector<Node *>::iterator it = find_if(functionScopes.begin(), functionScopes.end(), [i](Node *n) {
                 return n->data->name == getFunctionNameFromFunctionCall(Token::tokens.at(i).content);
@@ -427,6 +432,21 @@ int main(){
                 cout << "[INFO] You tried to call a function that hasn't yet been declared/defined." << endl;
             }
         }
+
+
+        int current_line = Token::tokens.at(i).line;
+        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+        //CASE:
+        // Variable Assignment
+        if(isVariableAssignment(i)){
+            string value = performAssignment(i+2, scope, current_line);
+            scope->addVariable(Token::tokens.at(i).content, value);
+        }
+
+        while(Token::tokens.at(i).line==current_line){
+            i++;
+        }
+
             //getFunctionNameFromFunctionCall(Token::tokens.at(i).content))!=functionScopes.end()
 
         // CASE: IF OUTSIDE OF FUNCTION
@@ -445,3 +465,4 @@ int main(){
 
     return 0;
 }
+
