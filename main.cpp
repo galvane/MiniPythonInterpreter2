@@ -272,7 +272,15 @@ int scope_engine(int i, Scope* scope)
                 //ELSE
             }else
                 {
-                // go to else
+                //move to next line //move to out of if scope
+                int if_line = Token::tokens.at(i).line;
+                int if_level = Token::tokens.at(i).level;
+                i = i + 1;
+                while(if_line == Token::tokens.at(i).line)
+                    i++;
+                while(if_level < Token::tokens.at(i).level)
+                    i++;
+                // go to else if there is one!
                 for(int t = i; t < Token::tokens.size(); t++){
                     if((Token::tokens.at(t).content.find("else:") != string::npos) && Token::tokens.at(t).level == if_level){
                         i = t;
@@ -281,7 +289,6 @@ int scope_engine(int i, Scope* scope)
                         scope1->line = Token::tokens.at(i).line;
                         return scope_engine(i, scope1);
                     }
-
                 }
             }
 
