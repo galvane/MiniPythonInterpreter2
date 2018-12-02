@@ -20,7 +20,8 @@ using namespace std;
 
 vector<Token>Token::tokens;
 Scope* globalScope = new Scope("","global");
-map<string, int>available_functions; //map function name to starting line where it is defined
+map<string, string>globalVariables;
+map<string, int>functions; //map function name to starting line where it is defined
 
 bool check_if(int i, Scope *scope)
 {
@@ -234,7 +235,7 @@ bool isVariableAssignment(int i){
 bool isMutatedvariable(){
 }
 
-int scope_engine(int i, Scope* scope)
+int scope_engine_func(int i, Scope *scope)
 {
     //while inside the scope
     while(Token::tokens.at(i).level+1 > scope->level){
@@ -266,7 +267,7 @@ int scope_engine(int i, Scope* scope)
                 Scope * scope1 = new Scope("","if");
                 scope1->level = Token::tokens.at(i).level;
                 scope1->line = Token::tokens.at(i).line;
-                return scope_engine(i, scope1);
+                return scope_engine_func(i, scope1);
                 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                 //CASE:
                 //ELSE
@@ -287,7 +288,7 @@ int scope_engine(int i, Scope* scope)
                         Scope * scope1 = new Scope("","else");
                         scope1->level = Token::tokens.at(i).level;
                         scope1->line = Token::tokens.at(i).line;
-                        return scope_engine(i, scope1);
+                        return scope_engine_func(i, scope1);
                     }
                 }
             }
@@ -318,9 +319,34 @@ int scope_engine(int i, Scope* scope)
 
 }
 
+void Main::print(int i) {
+    string content = Token::tokens.at(i).content;
+    int open_par = content.find("(");
+    int close_par = content.find(")");
+    string thing_to_print = content.substr(open_par+1, close_par-open_par-1);
+    int string_start;
+    int string_end;
+    int curr = 0;
+    do{
+        //covering for the case that the comma is part of a string
+       if(thing_to_print.find("\"", curr)!=string::npos){
+           string_start = thing_to_print.find("\"", curr);
+           string_end = thing_to_print.find("\"", string_start+1);
+           cout << thing_to_print.substr(1, thing_to_print.find(",", string_end)-2); //print with removed double quotes
+           curr = string_end + 1;
+       }else{ // print int or look up var value and print int
+           cout << thing_to_print.substr(curr+1, thing_to_print.find(",", curr));
+           curr = thing_to_print.find(",", curr) + 1;
+       }
+
+
+    }while( curr < thing_to_print.size() && thing_to_print.find(",", curr) != string::npos);
+    cout << endl;
+}
+
 int main(){
     //instantiate global variables
-    globalScope->variables = Main::globalVariables;
+    globalScope->variables = globalVariables;
 
 
     /* FIRST STEP */
@@ -392,26 +418,8 @@ int main(){
             functionScopes.push_back(head);
         }
 
-        /*int return_value;
-        if(Token::tokens.at(i).type == "FUNCTIONCALL" || ){
-            string function_name = Token::tokens.at(i).
-            //perform al operations not belonging to a function
-            return_value = scope_engine(i, functionDef);
-        }
-        else if (isfunctioncallAssignment(int i)){
-
-        }
-
-
-        else{
-            //perform all needed tasks inside of function
-        }
-
-        cout << return_value;
-         */
-
         // TODO: cover for functioncall assignment to variable
-        if(Token::tokens.at(i).type == "FUNCTIONCALL") {
+        else if(Token::tokens.at(i).type == "FUNCTIONCALL" && Token::tokens.at(i).content.find("print") == string::npos) {
             vector<Node *>::iterator it = find_if(functionScopes.begin(), functionScopes.end(), [i](Node *n) {
                 return n->data->name == getFunctionNameFromFunctionCall(Token::tokens.at(i).content);
             });
@@ -424,28 +432,44 @@ int main(){
                     m_it->second = params.at(i);
                 }
                 //call function
-                int return_value = scope_engine(it.operator*()->data->lexer_line, it.operator*()->data);
-                cout << return_value;
+                int return_value = scope_engine_func(it.operator*()->data->lexer_line, it.operator*()->data);
+                // store return_value for that function name
+                functions.insert((pair<string, int> (it.operator*()->data->name,return_value)));
             }
             else{
                 cout << "TypeError: 'int' object is not iterable" << endl;
                 cout << "[INFO] You tried to call a function that hasn't yet been declared/defined." << endl;
             }
+        }else{
+            //scope_engine();
         }
-
-
-        int current_line = Token::tokens.at(i).line;
+        
+//        int current_line = Token::tokens.at(i).line;
+//        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//        //CASE:
+//        // Variable Assignment
+//        if(isVariableAssignment(i)){
+//            string value = performAssignment(i+2, globalScope, current_line);
+//            globalScope->addVariable(Token::tokens.at(i).content, value);
+//            while(Token::tokens.at(i).line==current_line){
+//                i++;
+//            }
+//        }
         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        //CASE:
-        // Variable Assignment
-        if(isVariableAssignment(i)){
-            string value = performAssignment(i+2, scope, current_line);
-            scope->addVariable(Token::tokens.at(i).content, value);
-        }
+        //CASE
+        //PRINT
+//        if(Token::tokens.at(i).type == "FUNCTIONCALL" && Token::tokens.at(i).content.find("print")!=string::npos){
+//            Main::print(i);
+//        }
+//        else if(){
+//
+//
+//        }
+//        else{
+//
+//        }
 
-        while(Token::tokens.at(i).line==current_line){
-            i++;
-        }
+
 
             //getFunctionNameFromFunctionCall(Token::tokens.at(i).content))!=functionScopes.end()
 

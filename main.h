@@ -23,8 +23,10 @@ public:
     static string do_arithmetic(vector<string>);
 
     static string performAssignment(int, Scope *, int);
+    static void print(int i);
 };
 
 bool check_if(int, Scope*);
 int else_index;
 bool isfunctioncallAssignment(int);
+
