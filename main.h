@@ -19,11 +19,14 @@ class Main {
 public:
     static Scope *globalScope;
     static map<string, string>globalVariables;
+    static map<string, int>functions;
+
+    Main(Scope *globalScope);
 
     static string do_arithmetic(vector<string>);
 
     static string performAssignment(int, Scope *, int);
-    static void print(int i);
+    static void print(int, Scope*);
 };
 
 bool check_if(int, Scope*);
