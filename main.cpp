@@ -259,6 +259,7 @@ int Main::scope_engine(int i, Scope *scope)
                     while (Token::tokens.at(i).line == current_line && (i < Token::tokens.size())) {
                         i++;
                     }
+                    Main::i = i;
                 }
             }
 
@@ -282,6 +283,7 @@ int Main::scope_engine(int i, Scope *scope)
                         int if_line = Token::tokens.at(i).line;
                         while (if_line == Token::tokens.at(i).line && (i < Token::tokens.size()))
                             i++;
+                        Main::i = i;
                         return scope_engine(i, scope1);
                         // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
                         //CASE:
@@ -293,8 +295,10 @@ int Main::scope_engine(int i, Scope *scope)
                         i = i + 1;
                         while (if_line == Token::tokens.at(i).line && (i < Token::tokens.size()))
                             i++;
+                        Main::i = i;
                         while ((if_level < Token::tokens.at(i).level) && (i < Token::tokens.size()))
                             i++;
+                        Main::i = i;
                         // go to else if there is one!
                         for (int t = i; t < Token::tokens.size(); t++) {
                             if ((Token::tokens.at(t).content.find("else:") != string::npos) &&
@@ -303,6 +307,7 @@ int Main::scope_engine(int i, Scope *scope)
                                 Scope *scope1 = new Scope("", "else");
                                 scope1->level = Token::tokens.at(i).level;
                                 scope1->line = Token::tokens.at(i).line;
+                                Main::i = i;
                                 return scope_engine(i, scope1);
                             }
                         }
@@ -344,6 +349,7 @@ int Main::scope_engine(int i, Scope *scope)
                             return stoi(Token::tokens.at(i).content);
                         i++;
                     }
+                    Main::i = i;
                 }
             }else
                 break;
@@ -368,7 +374,7 @@ void Main::print(int i, Scope* scope) {
            if(thing_to_print.find(",")!=string::npos){
                cout << thing_to_print.substr(1, thing_to_print.find(",", string_end)-2); //print with removed double quotes
            }else{
-               cout << thing_to_print.substr(1, thing_to_print.find(",", thing_to_print.size()-3)); //print with removed double quotes
+               cout << thing_to_print.substr(1, thing_to_print.size()-2); //print with removed double quotes
            }
            curr = string_end + 1;
        }else{ // print int or look up var value and print int
