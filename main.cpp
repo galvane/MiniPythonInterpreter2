@@ -24,8 +24,10 @@ map<string, int>functions; //map function name to starting line where it is defi
 vector<Node*>functionScopes;
 Scope*  Main::globalScope = new Scope("","global");
 map<string, string>Main::globalVariables;
+int Main::i = 0;
+bool Main::last_line = false;
 
-bool check_if(int i, Scope *scope)
+bool Main::check_if(int i, Scope *scope)
 {
     string if_keyword = Token::tokens.at(i).content;  i++;
 
@@ -102,7 +104,7 @@ bool isReturnStatement(string returnKeyword){
     return (returnKeyword == "RETURN");
 }
 
-string performAssignment(int i, Scope *scope, int assignmentLine){
+string Main::performAssignment(int i, Scope *scope, int assignmentLine){
     bool arithmetic = false;
     vector<string> thingsToAssign;
 
@@ -235,101 +237,116 @@ bool isVariableAssignment(int i){
 bool isMutatedvariable(){
 }
 
-int scope_engine(int i, Scope *scope)
+int Main::scope_engine(int i, Scope *scope)
 {
     //while inside the scope
-    while(Token::tokens.at(i).level+1 >= scope->level){ //>= experimental
-        int current_line = Token::tokens.at(i).line;
+    if( !Main::last_line) {
+        while (Token::tokens.at(i).level + 1 >= scope->level) { //>= experimental
+            int current_line = Token::tokens.at(i).line;
 
 
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        //CASE:
-        // Variable Assignment
-        if(isVariableAssignment(i)){
-            string value = performAssignment(i + 2, scope, current_line);
-            if(Token::tokens.at(i).level == 0){ // GLOBAL VARIABLE
-                Main::globalScope->addVariable(Token::tokens.at(i).content, value);
-            }else { //LOLCAL SCOPE
-                scope->addVariable(Token::tokens.at(i).content, value);
-            }
-            while(Token::tokens.at(i).line==current_line){
-                i++;
-            }
-        }
-
-
-
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        //CASE:
-        //IF
-        bool if_result = false;
-        int if_level = Token::tokens.at(i).level;
-        if(Token::tokens.at(i).content.find("if")!=string::npos){
-            //TODO: count to make sure total number of else's is not greater than total number of if's
-            if_result = check_if(i, scope);
-            if(if_result == true){
-                //i = i + 1; // move to inside the if
-                Scope * scope1 = new Scope("","if");
-                scope1->level = Token::tokens.at(i).level;
-                scope1->line = Token::tokens.at(i).line;
-                //move to next line //move to inside of if
-                int if_line = Token::tokens.at(i).line;
-                while(if_line == Token::tokens.at(i).line)
-                    i++;
-                return scope_engine(i, scope1);
-                // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-                //CASE:
-                //ELSE
-            }else
-                {
-                //move to next line //move to out of if scope
-                int if_line = Token::tokens.at(i).line;
-                int if_level = Token::tokens.at(i).level;
-                i = i + 1;
-                while(if_line == Token::tokens.at(i).line)
-                    i++;
-                while(if_level < Token::tokens.at(i).level)
-                    i++;
-                // go to else if there is one!
-                for(int t = i; t < Token::tokens.size(); t++){
-                    if((Token::tokens.at(t).content.find("else:") != string::npos) && Token::tokens.at(t).level == if_level){
-                        i = t;
-                        Scope * scope1 = new Scope("","else");
-                        scope1->level = Token::tokens.at(i).level;
-                        scope1->line = Token::tokens.at(i).line;
-                        return scope_engine(i, scope1);
+            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            //CASE:
+            // Variable Assignment
+            if (!Main::last_line) {
+                if (isVariableAssignment(i) && !Main::last_line) {
+                    string value = performAssignment(i + 2, scope, current_line);
+                    if (Token::tokens.at(i).level == 0) { // GLOBAL VARIABLE
+                        Main::globalScope->addVariable(Token::tokens.at(i).content, value);
+                    } else { //LOLCAL SCOPE
+                        scope->addVariable(Token::tokens.at(i).content, value);
+                    }
+                    while (Token::tokens.at(i).line == current_line && (i < Token::tokens.size())) {
+                        i++;
                     }
                 }
             }
 
-        }
-
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        //CASE
-        //PRINT
-        if(Token::tokens.at(i).type == "FUNCTIONCALL" && Token::tokens.at(i).content.find("print")!=string::npos){
-            Main::print(i, scope);
-            //move to next line
-            while(current_line == Token::tokens.at(i).line)
-                i++;
-        }
-
-        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-        //CASE
-        //RETURN
-        if(Token::tokens.at(i).type == "RETURN"){
-            //TODO: CASE FOR RECURRSIVE CALL/FUNCTION
 
 
-            int current_line = Token::tokens.at(i).line;
-            while(Token::tokens.at(i).line==current_line){
-                i =i+1;
-                if(scope->variables.find(Token::tokens.at(i).content)!=scope->variables.end()){
-                    return stoi(scope->variables.at(Token::tokens.at(i).content));
-                }else
-                    return stoi(Token::tokens.at(i).content);
-                i++;
+            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            //CASE:
+            //IF
+            bool if_result = false;
+            int if_level = Token::tokens.at(i).level;
+            if (!Main::last_line) {
+                if (Token::tokens.at(i).content.find("if") != string::npos && !Main::last_line) {
+                    //TODO: count to make sure total number of else's is not greater than total number of if's
+                    if_result = check_if(i, scope);
+                    if (if_result == true) {
+                        //i = i + 1; // move to inside the if
+                        Scope *scope1 = new Scope("", "if");
+                        scope1->level = Token::tokens.at(i).level;
+                        scope1->line = Token::tokens.at(i).line;
+                        //move to next line //move to inside of if
+                        int if_line = Token::tokens.at(i).line;
+                        while (if_line == Token::tokens.at(i).line && (i < Token::tokens.size()))
+                            i++;
+                        return scope_engine(i, scope1);
+                        // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+                        //CASE:
+                        //ELSE
+                    } else {
+                        //move to next line //move to out of if scope
+                        int if_line = Token::tokens.at(i).line;
+                        int if_level = Token::tokens.at(i).level;
+                        i = i + 1;
+                        while (if_line == Token::tokens.at(i).line && (i < Token::tokens.size()))
+                            i++;
+                        while ((if_level < Token::tokens.at(i).level) && (i < Token::tokens.size()))
+                            i++;
+                        // go to else if there is one!
+                        for (int t = i; t < Token::tokens.size(); t++) {
+                            if ((Token::tokens.at(t).content.find("else:") != string::npos) &&
+                                Token::tokens.at(t).level == if_level) {
+                                i = t;
+                                Scope *scope1 = new Scope("", "else");
+                                scope1->level = Token::tokens.at(i).level;
+                                scope1->line = Token::tokens.at(i).line;
+                                return scope_engine(i, scope1);
+                            }
+                        }
+                    }
+
+                }
             }
+
+            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            //CASE
+            //PRINT
+            if (!Main::last_line) {
+                if ((Token::tokens.at(i).type == "FUNCTIONCALL") &&
+                    (Token::tokens.at(i).content.find("print") != string::npos)) {
+                    Main::print(i, scope);
+                    i = Main::i;
+                    if (i == Token::tokens.size()) {
+                        Main::last_line = true;
+                    }
+
+
+                }
+            }
+
+            // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+            //CASE
+            //RETURN
+            if (!Main::last_line) {
+                if (Token::tokens.at(Main::i).type == "RETURN") {
+                    //TODO: CASE FOR RECURRSIVE CALL/FUNCTION
+
+
+                    int current_line = Token::tokens.at(i).line;
+                    while (Token::tokens.at(i).line == current_line && (i < Token::tokens.size())) {
+                        i = i + 1;
+                        if (scope->variables.find(Token::tokens.at(i).content) != scope->variables.end()) {
+                            return stoi(scope->variables.at(Token::tokens.at(i).content));
+                        } else
+                            return stoi(Token::tokens.at(i).content);
+                        i++;
+                    }
+                }
+            }else
+                break;
         }
     }
     return -111; //done --> no function
@@ -348,7 +365,11 @@ void Main::print(int i, Scope* scope) {
        if(thing_to_print.find("\"", curr)!=string::npos){
            string_start = thing_to_print.find("\"", curr);
            string_end = thing_to_print.find("\"", string_start+1);
-           cout << thing_to_print.substr(1, thing_to_print.find(",", string_end)-2); //print with removed double quotes
+           if(thing_to_print.find(",")!=string::npos){
+               cout << thing_to_print.substr(1, thing_to_print.find(",", string_end)-2); //print with removed double quotes
+           }else{
+               cout << thing_to_print.substr(1, thing_to_print.find(",", thing_to_print.size()-3)); //print with removed double quotes
+           }
            curr = string_end + 1;
        }else{ // print int or look up var value and print int
            string var = thing_to_print.substr(curr+1, thing_to_print.find(",", curr));
@@ -373,6 +394,7 @@ void Main::print(int i, Scope* scope) {
 
     }while( curr < thing_to_print.size() && thing_to_print.find(",", curr) != string::npos);
     cout << endl;
+    Main::i = i+1;
 }
 
 int main(){
@@ -391,8 +413,7 @@ int main(){
 
     //STEP 3:
     // create scopes
-    for(int i = 0; i < Token::tokens.size()-2; i++){
-        int j = i + 1;
+    for(int i = 0; i < Token::tokens.size(); i++){
 
         if(Token::tokens.at(i).type == "KEYWORD" && (Token::tokens.at(i).content.find("if")!=string::npos)){
             Scope *ifStatement = new Scope("","if");
@@ -468,7 +489,7 @@ int main(){
                     m_it->second = params.at(i);
                 }
                 //call function
-                int return_value = scope_engine(it.operator*()->data->lexer_line+1, it.operator*()->data);
+                int return_value = Main::scope_engine(it.operator*()->data->lexer_line+1, it.operator*()->data);
                 // store return_value for that function name
                 functions.insert((pair<string, int> (it.operator*()->data->name,return_value)));
                 if(Main::globalScope->variables.find(var)!=Main::globalScope->variables.end()){ //if var already exists
@@ -499,7 +520,7 @@ int main(){
                     m_it->second = params.at(i);
                 }
                 //call function
-                int return_value = scope_engine(it.operator*()->data->lexer_line+1, it.operator*()->data);
+                int return_value = Main::scope_engine(it.operator*()->data->lexer_line+1, it.operator*()->data);
                 // store return_value for that function name
                 functions.insert((pair<string, int> (it.operator*()->data->name,return_value)));
             }
@@ -512,7 +533,8 @@ int main(){
             scope->level = Token::tokens.at(i).level;
             scope->line = Token::tokens.at(i).line;
             scope->lexer_line = i;
-            scope_engine(i, scope);
+            Main::scope_engine(i, scope);
+            i = Main::i;
         }
     }
     return 0;

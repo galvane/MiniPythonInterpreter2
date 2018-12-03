@@ -17,9 +17,13 @@ using namespace std;
 
 class Main {
 public:
+    static int i;
+    static bool last_line;
     static Scope *globalScope;
     static map<string, string>globalVariables;
     static map<string, int>functions;
+    static bool check_if(int, Scope*);
+    static int scope_engine(int i, Scope *scope);
 
     Main(Scope *globalScope);
 
@@ -29,7 +33,7 @@ public:
     static void print(int, Scope*);
 };
 
-bool check_if(int, Scope*);
+
 int else_index;
 bool isfunctioncallAssignment(int);
 
