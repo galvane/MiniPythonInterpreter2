@@ -445,7 +445,43 @@ int main(){
             struct Node *head = new Node(functionDef);
             functionScopes.push_back(head);
         }
-        // TODO: cover for functioncall assignment to variable
+        // cover for functioncall assignment to variable
+        // assuming this will not happen inside of a function or inside of an if
+        if(Token::tokens.at(i).type == "VARIABLE" && Token::tokens.at(i+1).type == "EQUALS" && Token::tokens.at(i+2).type == "FUNCTIONCALL")
+        {
+            string var = Token::tokens.at(i).content;
+            string functioncall = Token::tokens.at(i+2).content.substr(0, Token::tokens.at(i+2).content.find("("));
+
+
+            vector<Node *>::iterator it = find_if(functionScopes.begin(), functionScopes.end(), [i](Node *n) {
+                return n->data->name == getFunctionNameFromFunctionCall(Token::tokens.at(i+2).content);
+            });
+            // if the function exists
+            if(*it !=  NULL){
+                vector<string> params = getFunctionCallValuesToVariables(Token::tokens.at(i+2).content);
+                // plug in/assign function call values to function paramaters
+                for(int i = 0; i < params.size() && params[0]!=""; i++){
+                    std::map<string, string>::iterator m_it = it.operator*()->data->variables.find(it.operator*()->data->parameters.at(i));
+                    m_it->second = params.at(i);
+                }
+                //call function
+                int return_value = scope_engine(it.operator*()->data->lexer_line+1, it.operator*()->data);
+                // store return_value for that function name
+                functions.insert((pair<string, int> (it.operator*()->data->name,return_value)));
+                if(Main::globalScope->variables.find(var)!=Main::globalScope->variables.end()){ //if var already exists
+                    Main::globalScope->variables.at(var) = to_string(return_value);
+                }else{
+                    Main::globalScope->variables.insert(pair<string,string>(Token::tokens.at(i).content, to_string(return_value)));
+                }
+
+            }
+            else{
+                cout << "TypeError: 'int' object is not iterable" << endl;
+                cout << "[INFO] You tried to call a function that hasn't yet been declared/defined." << endl;
+            }
+
+            i = i + 3;
+        }
         if(Token::tokens.at(i).type == "FUNCTIONCALL" && Token::tokens.at(i).content.find("print") == string::npos)
         {
             vector<Node *>::iterator it = find_if(functionScopes.begin(), functionScopes.end(), [i](Node *n) {
