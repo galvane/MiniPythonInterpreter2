@@ -1,18 +1,10 @@
-def f():
-   a = 1
-   b = 10
-   c = a + b
-   d = c * a -b
-   if c == a:
-      m = 100
+##ackermann function##
+def f(x,y):
+   if x == 0:
+      return y+1
+   if y == 0:
+      return f(x-1,1)
    else:
-      m = 50
-   return m
+      return f(x-1,f(x,y-1))
 
-f()
-x = f()
-
-if x!=1000:
-   print ("value is not 1000, it is =",x)
-else:
-   print ("value is 1000")
+f(1,2)

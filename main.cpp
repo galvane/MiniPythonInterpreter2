@@ -318,6 +318,9 @@ int scope_engine(int i, Scope *scope)
         //CASE
         //RETURN
         if(Token::tokens.at(i).type == "RETURN"){
+            //TODO: CASE FOR RECURRSIVE CALL/FUNCTION
+
+
             int current_line = Token::tokens.at(i).line;
             while(Token::tokens.at(i).line==current_line){
                 i =i+1;
