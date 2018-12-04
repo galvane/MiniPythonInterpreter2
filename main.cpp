@@ -76,8 +76,14 @@ bool Main::check_if(int i, Scope *scope)
         return (num1 > num2);
 
     }
+    else if(Token::tokens.at(comp_index).type == "GREATER_THAN_OR_EQUAL"){
+        return (num1 >= num2);
+    }
     else if(Token::tokens.at(comp_index).type == "LESS_THAN"){
         return (num1 < num2);
+    }
+    else if(Token::tokens.at(comp_index).type == "LESS_THAN_OR_EQUAL"){
+        return (num1 <= num2);
     }
     else{
         //!= case
@@ -123,6 +129,8 @@ string Main::performAssignment(int i, Scope *scope, int assignmentLine){
             thingsToAssign.push_back(line);
         i++;
     }
+    Main::i = i;
+
     if(arithmetic){
         return Main::do_arithmetic(thingsToAssign);
     } else
@@ -255,14 +263,11 @@ int Main::scope_engine(int i, Scope *scope)
                     if ( (Token::tokens.at(i).level == 0) || !Main::inside_function ){ // GLOBAL VARIABLE
                         string value = performAssignment(i + 2, globalScope, current_line);
                         Main::globalScope->addVariable(Token::tokens.at(i).content, value);
-                    } else { //LOLCAL SCOPE
+                    } else { //LOCAL SCOPE
                         string value = performAssignment(i + 2, scope, current_line);
                         scope->addVariable(Token::tokens.at(i).content, value);
                     }
-                    while (Token::tokens.at(i).line == current_line && (i < Token::tokens.size())) { //TODO: remove thing after && ajdust code accordingly
-                        i++;
-                    }
-                    Main::i = i;
+                    i = Main::i;
                 }
             }
 
@@ -311,16 +316,21 @@ int Main::scope_engine(int i, Scope *scope)
                             if ((Token::tokens.at(t).content.find("else:") != string::npos) &&
                                 Token::tokens.at(t).level == if_level) {
                                 i = t;
-                                Scope *scope1 = new Scope("", "else");
-                                scope1->level = Token::tokens.at(i).level;
-                                scope1->line = Token::tokens.at(i).line;
+//                                Scope *scope1 = new Scope("", "else");
+//                                scope1->level = Token::tokens.at(i).level;
+//                                scope1->line = Token::tokens.at(i).line;
                                 Main::i = i;
-                                return scope_engine(i, scope1);
+                                return scope_engine(i, scope);
                             }
                         }
                     }
 
                 }
+            }
+
+            if(Token::tokens.at(i).content.find("else:") != string::npos && Token::tokens.at(i).type == "KEYWORD"){
+                i++;
+                Main:: i = i;
             }
 
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -386,12 +396,16 @@ void Main::print(int i, Scope* scope) {
            curr = string_end + 1;
        }else{ // print int or look up var value and print int
            string var = thing_to_print.substr(curr+1, thing_to_print.find(",", curr));
+           //remove whitespaces from var:
+           std::string::iterator end_pos = std::remove(var.begin(), var.end(), ' ');
+           var.erase(end_pos, var.end());
+
            if(var.find_first_not_of( "0123456789" ) == string::npos){ //IF INT
                cout << thing_to_print.substr(curr+1, thing_to_print.find(",", curr));
            }else{
                //IF VAR
                if(scope->variables.find(var)!=scope->variables.end()){ //LOCAL SCOPE
-                   cout <<  (scope->variables.at(Token::tokens.at(i).content));
+                   cout <<  (scope->variables.at(var));
                }
                else if(globalScope->variables.find(var)!=globalScope->variables.end()){ //GLOBAL SCOPE
                    cout << (globalScope->variables.at(var));
@@ -548,11 +562,15 @@ int main(){
                 cout << "[INFO] You tried to call a function that hasn't yet been declared/defined." << endl;
             }
         }else if(!(tokentype == "COMMENT")){
-            Scope * scope = new Scope("",Token::tokens.at(i).type);
-            scope->level = Token::tokens.at(i).level;
-            scope->line = Token::tokens.at(i).line;
-            scope->lexer_line = i;
-            Main::scope_engine(i, scope);
+            if(Token::tokens.at(i).level == 0 || !Main::inside_function){
+                Main::scope_engine(i, Main::globalScope);
+            }else{
+                Scope * scope = new Scope("",Token::tokens.at(i).type);
+                scope->level = Token::tokens.at(i).level;
+                scope->line = Token::tokens.at(i).line;
+                scope->lexer_line = i;
+                Main::scope_engine(i, scope);
+            }
             i = Main::i;
         }else{ //CASE: COMMENT
             //do nothing
