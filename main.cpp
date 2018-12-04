@@ -250,10 +250,12 @@ int Main::scope_engine(int i, Scope *scope)
             // Variable Assignment
             if (!Main::last_line) {
                 if (isVariableAssignment(i) && !Main::last_line) {
-                    string value = performAssignment(i + 2, scope, current_line);
+                    string value = "";
                     if (Token::tokens.at(i).level == 0) { // GLOBAL VARIABLE
+                        string value = performAssignment(i + 2, globalScope, current_line);
                         Main::globalScope->addVariable(Token::tokens.at(i).content, value);
                     } else { //LOLCAL SCOPE
+                        string value = performAssignment(i + 2, scope, current_line);
                         scope->addVariable(Token::tokens.at(i).content, value);
                     }
                     while (Token::tokens.at(i).line == current_line && (i < Token::tokens.size())) {
