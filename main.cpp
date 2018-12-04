@@ -255,6 +255,23 @@ int Main::scope_engine(int i, Scope *scope)
         while (Token::tokens.at(i).level + 1 >= scope->level) { //>= experimental
             int current_line = Token::tokens.at(i).line;
 
+            //CASE:
+            //FUNCTION
+            if (!Main::last_line) {
+                if (Token::tokens.at(i).type == "FUNCTION"){
+                    Main::i = i - 1;
+                    return -111;
+                }
+            }
+
+            if (!Main::last_line) {
+                //functioncall assignment
+                if (Token::tokens.at(i).type == "VARIABLE" && Token::tokens.at(i + 1).type == "EQUALS" &&
+                    Token::tokens.at(i + 2).type == "FUNCTIONCALL") {
+                    Main::i = i - 1;
+                    return -111;
+                }
+            }
 
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             //CASE:
@@ -339,7 +356,7 @@ int Main::scope_engine(int i, Scope *scope)
             //CASE
             //PRINT
             if (!Main::last_line) {
-                if ((Token::tokens.at(i).type == "FUNCTIONCALL") &&
+                if (  (Token::tokens.at(i).type == "FUNCTIONCALL" || Token::tokens.at(i).type == "PRINT_STATEMENT") &&
                     (Token::tokens.at(i).content.find("print") != string::npos)) {
                     Main::print(i, scope);
                     i = Main::i;
@@ -397,7 +414,11 @@ void Main::print(int i, Scope* scope) {
            }
            curr = string_end + 1;
        }else{ // print int or look up var value and print int
-           string var = thing_to_print.substr(curr+1, thing_to_print.find(",", curr));
+           string var = "";
+           if(curr == 0)
+               var = thing_to_print.substr(0, thing_to_print.find(",", curr));
+           else
+               var = thing_to_print.substr(curr+1, thing_to_print.find(",", curr));
            //remove whitespaces from var:
            std::string::iterator end_pos = std::remove(var.begin(), var.end(), ' ');
            var.erase(end_pos, var.end());
@@ -573,6 +594,7 @@ int main(){
                 scope->lexer_line = i;
                 Main::scope_engine(i, scope);
             }
+
             i = Main::i;
         }else{ //CASE: COMMENT
             //do nothing

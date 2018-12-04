@@ -9,7 +9,12 @@ Scope::Scope(string name, string type){
     this->type = type;
 }
 void Scope::addVariable(string name, string value){
-    this->variables.insert(pair<string, string>(name, value));
+    if (this->variables.find(name) != variables.end()){
+        this->variables[name] = value;
+    }else{
+        this->variables.insert(pair<string, string>(name, value));
+    }
+
 }
 void Scope::addParameter(string parameter){
     this->parameters.push_back(parameter);
