@@ -16,6 +16,7 @@ using namespace std;
 
 class Scope{
 public:
+    int lexer_line;
     int line;
     int level;
     string name;

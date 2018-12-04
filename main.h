@@ -18,6 +18,9 @@ using namespace std;
 class Main {
 public:
     static int i;
+    static bool if_result;
+    static int if_level;
+    static bool inside_function;
     static bool last_line;
     static Scope *globalScope;
     static map<string, string>globalVariables;

@@ -27,6 +27,8 @@ map<string, string>Main::globalVariables;
 int Main::i = 0;
 bool Main::last_line = false;
 bool Main::inside_function = false;
+bool Main::if_result = false;
+int Main::if_level = 0;
 
 bool Main::check_if(int i, Scope *scope)
 {
@@ -276,10 +278,10 @@ int Main::scope_engine(int i, Scope *scope)
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
             //CASE:
             //IF
-            bool if_result = false;
-            int if_level = Token::tokens.at(i).level;
             if (!Main::last_line) {
                 if (Token::tokens.at(i).content.find("if") != string::npos && !Main::last_line) {
+                    Main::if_result = false;
+                    Main::if_level = Token::tokens.at(i).level;
                     //TODO: count to make sure total number of else's is not greater than total number of if's
                     if(Token::tokens.at(i).level == 0){
                         if_result = check_if(i, Main::globalScope);
@@ -328,7 +330,7 @@ int Main::scope_engine(int i, Scope *scope)
                 }
             }
 
-            if(Token::tokens.at(i).content.find("else:") != string::npos && Token::tokens.at(i).type == "KEYWORD"){
+            if(Token::tokens.at(i).content.find("else:") != string::npos && Token::tokens.at(i).type == "KEYWORD" && if_level == Token::tokens.at(i).level && !Main::if_result){
                 i++;
                 Main:: i = i;
             }
