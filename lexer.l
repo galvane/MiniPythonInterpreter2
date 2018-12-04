@@ -26,9 +26,12 @@ return {printf("LINE=%d TYPE=RETURN TOKEN=%s LEVEL=%d\n", linenumber, yytext, in
 "," {printf("LINE=%d TYPE=COMMA TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
 [ ]*\"(.*)\"[ ]* {printf("LINE=%d TYPE=STRING TOKEN=%s LEVEL=%d\n",linenumber, yytext, indentlevel);}
 [a-zA-Z_$][a-zA-Z_$0-9]* {printf("LINE=%d TYPE=VARIABLE TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel); }
+"!=" {printf("LINE=%d TYPE=NOT_EQUAL TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "==" {printf("LINE=%d TYPE=EQUALSCOMPARISON TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 ">" {printf("LINE=%d TYPE=GREATER_THAN TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+">=" {printf("LINE=%d TYPE=GREATER_THAN_OR_EQUAL TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "<" {printf("LINE=%d TYPE=LESS_THAN TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
+"<=" {printf("LINE=%d TYPE=LESS_THAN_OR_EQUAL TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "=" {printf("LINE=%d TYPE=EQUALS TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "-" {printf("LINE=%d TYPE=MINUS TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
 "+" {printf("LINE=%d TYPE=PLUS TOKEN=%s LEVEL=%d\n", linenumber,yytext, indentlevel);}
