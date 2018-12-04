@@ -427,8 +427,9 @@ int main(){
     //STEP 3:
     // create scopes
     for(int i = 0; i < Token::tokens.size(); i++){
+        string tokentype = Token::tokens.at(i).type;
 
-        if(Token::tokens.at(i).type == "KEYWORD" && (Token::tokens.at(i).content.find("if")!=string::npos)){
+        if(tokentype == "KEYWORD" && (Token::tokens.at(i).content.find("if")!=string::npos)){
             Scope *ifStatement = new Scope("","if");
             ifStatement->token = &Token::tokens.at(i);
             ifStatement->line = Token::tokens.at(i).line;
@@ -443,7 +444,7 @@ int main(){
             }
         }
         // CASE: function, we have a head of scope which is the function definition
-        if(Token::tokens.at(i).type == "FUNCTION")
+        if(tokentype == "FUNCTION")
         {
             Main::inside_function = true;
             // create a head of Scope
@@ -483,10 +484,11 @@ int main(){
             struct Node *head = new Node(functionDef);
             functionScopes.push_back(head);
             Main::inside_function = false;
+            tokentype = Token::tokens.at(i).type; //update token type
         }
         // cover for functioncall assignment to variable
         // assuming this will not happen inside of a function or inside of an if
-        if(Token::tokens.at(i).type == "VARIABLE" && Token::tokens.at(i+1).type == "EQUALS" && Token::tokens.at(i+2).type == "FUNCTIONCALL")
+        if(tokentype == "VARIABLE" && Token::tokens.at(i+1).type == "EQUALS" && Token::tokens.at(i+2).type == "FUNCTIONCALL")
         {
             string var = Token::tokens.at(i).content;
             string functioncall = Token::tokens.at(i+2).content.substr(0, Token::tokens.at(i+2).content.find("("));
@@ -504,7 +506,9 @@ int main(){
                     m_it->second = params.at(i);
                 }
                 //call function
+                Main::inside_function = true;
                 int return_value = Main::scope_engine(it.operator*()->data->lexer_line+1, it.operator*()->data);
+                Main::inside_function = false;
                 // store return_value for that function name
                 functions.insert((pair<string, int> (it.operator*()->data->name,return_value)));
                 if(Main::globalScope->variables.find(var)!=Main::globalScope->variables.end()){ //if var already exists
@@ -521,7 +525,7 @@ int main(){
 
             i = i + 3;
         }
-        if(Token::tokens.at(i).type == "FUNCTIONCALL" && Token::tokens.at(i).content.find("print") == string::npos)
+        if(tokentype == "FUNCTIONCALL" && Token::tokens.at(i).content.find("print") == string::npos)
         {
             vector<Node *>::iterator it = find_if(functionScopes.begin(), functionScopes.end(), [i](Node *n) {
                 return n->data->name == getFunctionNameFromFunctionCall(Token::tokens.at(i).content);
@@ -543,13 +547,15 @@ int main(){
                 cout << "TypeError: 'int' object is not iterable" << endl;
                 cout << "[INFO] You tried to call a function that hasn't yet been declared/defined." << endl;
             }
-        }else {
+        }else if(!(tokentype == "COMMENT")){
             Scope * scope = new Scope("",Token::tokens.at(i).type);
             scope->level = Token::tokens.at(i).level;
             scope->line = Token::tokens.at(i).line;
             scope->lexer_line = i;
             Main::scope_engine(i, scope);
             i = Main::i;
+        }else{ //CASE: COMMENT
+            //do nothing
         }
     }
     return 0;
