@@ -28,6 +28,7 @@ public:
     string returnStatement;
     string elseStatement;
     string printStatement;
+    static bool mutation;
 
     Scope(string name, string type);
     void addVariable(string name, string value);

@@ -117,7 +117,8 @@ string Main::performAssignment(int i, Scope *scope, int assignmentLine){
     bool arithmetic = false;
     vector<string> thingsToAssign;
 
-    while(Token::tokens.at(i).line == assignmentLine){
+    int current_line = Token::tokens.at(i).line;
+    while(current_line == assignmentLine){
         string line = Token::tokens.at(i).content;
 
 
@@ -130,6 +131,14 @@ string Main::performAssignment(int i, Scope *scope, int assignmentLine){
         } else
             thingsToAssign.push_back(line);
         i++;
+
+        if(i >= Token::tokens.size()){
+            Main::last_line = true;
+            current_line = current_line + 1 ;
+            i = i - 1;
+        }
+        else
+            current_line = Token::tokens.at(i).line;
     }
     Main::i = i;
 
@@ -285,6 +294,12 @@ int Main::scope_engine(int i, Scope *scope)
                     } else { //LOCAL SCOPE
                         string value = performAssignment(i + 2, scope, current_line);
                         scope->addVariable(Token::tokens.at(i).content, value);
+                    }
+
+                    //CHECK FOR MUTATION
+                    if(Scope::mutation){
+                        cout << "Mutated variable: " << Token::tokens.at(i).content << endl;
+                        Scope::mutation = false;
                     }
                     i = Main::i;
                 }

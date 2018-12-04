@@ -10,6 +10,7 @@ Scope::Scope(string name, string type){
 }
 void Scope::addVariable(string name, string value){
     if (this->variables.find(name) != variables.end()){
+        mutation = true;
         this->variables[name] = value;
     }else{
         this->variables.insert(pair<string, string>(name, value));
@@ -19,3 +20,5 @@ void Scope::addVariable(string name, string value){
 void Scope::addParameter(string parameter){
     this->parameters.push_back(parameter);
 }
+
+bool Scope::mutation = false;
