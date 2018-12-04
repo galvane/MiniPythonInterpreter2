@@ -26,6 +26,7 @@ Scope*  Main::globalScope = new Scope("","global");
 map<string, string>Main::globalVariables;
 int Main::i = 0;
 bool Main::last_line = false;
+bool Main::inside_function = false;
 
 bool Main::check_if(int i, Scope *scope)
 {
@@ -75,7 +76,7 @@ bool Main::check_if(int i, Scope *scope)
         return (num1 > num2);
 
     }
-    else if(Token::tokens.at(comp_index).type == "LESS__THAN"){
+    else if(Token::tokens.at(comp_index).type == "LESS_THAN"){
         return (num1 < num2);
     }
     else{
@@ -251,14 +252,14 @@ int Main::scope_engine(int i, Scope *scope)
             if (!Main::last_line) {
                 if (isVariableAssignment(i) && !Main::last_line) {
                     string value = "";
-                    if (Token::tokens.at(i).level == 0) { // GLOBAL VARIABLE
+                    if ( (Token::tokens.at(i).level == 0) || !Main::inside_function ){ // GLOBAL VARIABLE
                         string value = performAssignment(i + 2, globalScope, current_line);
                         Main::globalScope->addVariable(Token::tokens.at(i).content, value);
                     } else { //LOLCAL SCOPE
                         string value = performAssignment(i + 2, scope, current_line);
                         scope->addVariable(Token::tokens.at(i).content, value);
                     }
-                    while (Token::tokens.at(i).line == current_line && (i < Token::tokens.size())) {
+                    while (Token::tokens.at(i).line == current_line && (i < Token::tokens.size())) { //TODO: remove thing after && ajdust code accordingly
                         i++;
                     }
                     Main::i = i;
@@ -275,7 +276,11 @@ int Main::scope_engine(int i, Scope *scope)
             if (!Main::last_line) {
                 if (Token::tokens.at(i).content.find("if") != string::npos && !Main::last_line) {
                     //TODO: count to make sure total number of else's is not greater than total number of if's
-                    if_result = check_if(i, scope);
+                    if(Token::tokens.at(i).level == 0){
+                        if_result = check_if(i, Main::globalScope);
+                    }else {
+                        if_result = check_if(i, scope);
+                    }
                     if (if_result == true) {
                         //i = i + 1; // move to inside the if
                         Scope *scope1 = new Scope("", "if");
@@ -440,6 +445,7 @@ int main(){
         // CASE: function, we have a head of scope which is the function definition
         if(Token::tokens.at(i).type == "FUNCTION")
         {
+            Main::inside_function = true;
             // create a head of Scope
 
             // finding indexes
@@ -476,6 +482,7 @@ int main(){
 
             struct Node *head = new Node(functionDef);
             functionScopes.push_back(head);
+            Main::inside_function = false;
         }
         // cover for functioncall assignment to variable
         // assuming this will not happen inside of a function or inside of an if
