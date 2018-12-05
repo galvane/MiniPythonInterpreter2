@@ -20,6 +20,8 @@ public:
     static int i;
     static bool if_result;
     static int if_level;
+    static int if_count;
+    static int else_count;
     static bool inside_function;
     static bool last_line;
     static Scope *globalScope;
@@ -27,7 +29,9 @@ public:
     static map<string, int>functions;
     static bool check_if(int, Scope*);
     static int scope_engine(int i, Scope *scope);
+    static vector<string>mutatedvars;
     static vector<int>nested_iflevels;
+    static void print_mutatedvars();
     static void print_nested_iflevels();
 
     Main(Scope *globalScope);

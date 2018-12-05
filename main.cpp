@@ -29,22 +29,41 @@ bool Main::last_line = false;
 bool Main::inside_function = false;
 bool Main::if_result = false;
 int Main::if_level = 0;
+vector<string>Main::mutatedvars;
 vector<int>Main::nested_iflevels;
-void Main::print_nested_iflevels(){
-    int max = 0;
-    vector<int>print_this;
-    for(int i = 0; i < nested_iflevels.size(); i++){
-        if(nested_iflevels[i] > 0){
-            max = nested_iflevels[i];
-        }else{
-            print_this.push_back(max);
+void Main::print_mutatedvars(){
+    if(mutatedvars.size() > 0){
+        cout << "Mutated variable: ";
+        for(int i = 0; i < mutatedvars.size(); i++){
+            if(i > 0)
+                cout << ", ";
+            cout << mutatedvars[i] << endl;
         }
     }
-    cout << "Nested if/else level: ";
-    for(int i = 0; i < print_this.size(); i++){
-        cout << print_this[i] << " level, ";
+}
+void Main::print_nested_iflevels(){
+    if(nested_iflevels.size() > 0){
+        int max = 0;
+        vector<int>print_this;
+        for(int i = 0; i < nested_iflevels.size(); i++){
+            if(nested_iflevels[i] == 0 && i > 0){
+                print_this.push_back(max);
+                max = 0;
+            }
+            if(nested_iflevels[i] > max)
+                max = nested_iflevels[i];
+
+            if(i == nested_iflevels.size()-1)
+                print_this.push_back(max);
+        }
+        cout << "Nested if/else level: ";
+        for(int i = 0; i < print_this.size(); i++){
+            if(i > 0)
+                cout << ", ";
+            cout << print_this[i] << " level";
+        }
+        cout << endl;
     }
-    cout << endl;
 }
 
 bool Main::check_if(int i, Scope *scope)
@@ -319,7 +338,7 @@ int Main::scope_engine(int i, Scope *scope)
 
                     //CHECK FOR MUTATION
                     if(Scope::mutation){
-                        cout << "Mutated variable: " << Token::tokens.at(i).content << endl;
+                        Main::mutatedvars.push_back(Token::tokens.at(i).content);
                         Scope::mutation = false;
                     }
                     i = Main::i;
@@ -476,7 +495,7 @@ void Main::print(int i, Scope* scope) {
            var.erase(end_pos, var.end());
 
            if(var.find_first_not_of( "0123456789" ) == string::npos){ //IF INT
-               cout << thing_to_print.substr(curr+1, thing_to_print.find(",", curr));
+               cout << thing_to_print.substr(curr, thing_to_print.find(",", curr));
            }else{
                //IF VAR
                if(scope->variables.find(var)!=scope->variables.end()){ //LOCAL SCOPE
@@ -518,20 +537,6 @@ int main(){
     for(int i = 0; i < Token::tokens.size(); i++){
         string tokentype = Token::tokens.at(i).type;
 
-        if(tokentype == "KEYWORD" && (Token::tokens.at(i).content.find("if")!=string::npos)){
-            Scope *ifStatement = new Scope("","if");
-            ifStatement->token = &Token::tokens.at(i);
-            ifStatement->line = Token::tokens.at(i).line;
-            if(isConditionalStatement(Token::tokens.at(i + 1).type, Token::tokens.at(i + 2).type,
-                                      Token::tokens.at(i + 3).type, Token::tokens.at(i + 4).type)){
-                ifStatement->conditionalStatement =
-                        Token::tokens.at(i + 1).content + Token::tokens.at(i + 2).content +
-                        Token::tokens.at(i + 3).content + Token::tokens.at(i + 4).content;
-                i = i+5;
-            }else{
-                cout << "Not a valid conditional statement after \"if\"";
-            }
-        }
         // CASE: function, we have a head of scope which is the function definition
         if(tokentype == "FUNCTION")
         {
@@ -652,7 +657,7 @@ int main(){
             //do nothing
         }
     }
-
+    Main::print_mutatedvars();
     Main::print_nested_iflevels();
 
     return 0;
