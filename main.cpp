@@ -29,6 +29,23 @@ bool Main::last_line = false;
 bool Main::inside_function = false;
 bool Main::if_result = false;
 int Main::if_level = 0;
+vector<int>Main::nested_iflevels;
+void Main::print_nested_iflevels(){
+    int max = 0;
+    vector<int>print_this;
+    for(int i = 0; i < nested_iflevels.size(); i++){
+        if(nested_iflevels[i] > 0){
+            max = nested_iflevels[i];
+        }else{
+            print_this.push_back(max);
+        }
+    }
+    cout << "Nested if/else level: ";
+    for(int i = 0; i < print_this.size(); i++){
+        cout << print_this[i] << " level, ";
+    }
+    cout << endl;
+}
 
 bool Main::check_if(int i, Scope *scope)
 {
@@ -57,8 +74,10 @@ bool Main::check_if(int i, Scope *scope)
         num1 = stoi(Token::tokens.at(num1_index).content);
     else{
         //VARIABLE
-        if(scope->variables.find(Token::tokens.at(num1_index).content)!=scope->variables.end()){
+        if(scope->variables.find(Token::tokens.at(num1_index).content)!=scope->variables.end()){ //LOCAL SCOPE
             num1 = stoi(scope->variables.at(Token::tokens.at(num1_index).content));
+        }else if(globalScope->variables.find(Token::tokens.at(num1_index).content)!=globalScope->variables.end()){ //GLOBAL SCOPE
+            num1 = stoi(globalScope->variables.at(Token::tokens.at(num1_index).content));
         }
     }
 
@@ -66,8 +85,10 @@ bool Main::check_if(int i, Scope *scope)
         num2 = stoi(Token::tokens.at(num2_index).content);
     else{
         //VARIABLE
-        if(scope->variables.find(Token::tokens.at(num2_index).content)!=scope->variables.end()){
+        if(scope->variables.find(Token::tokens.at(num2_index).content)!=scope->variables.end()){ //LOCAL SCOPE
             num2 = stoi(scope->variables.at(Token::tokens.at(num2_index).content));
+        }else if(globalScope->variables.find(Token::tokens.at(num2_index).content)!=globalScope->variables.end()){
+            num2 = stoi(globalScope->variables.at(Token::tokens.at(num2_index).content));
         }
     }
 
@@ -314,7 +335,11 @@ int Main::scope_engine(int i, Scope *scope)
                 if (Token::tokens.at(i).content.find("if") != string::npos && !Main::last_line) {
                     Main::if_result = false;
                     Main::if_level = Token::tokens.at(i).level;
+                    if(!Main::inside_function)
+                        Main::nested_iflevels.push_back(Main::if_level);
+                        //cout << "Nested if/else level: " << Main::if_level << " level" << endl;
                     //TODO: count to make sure total number of else's is not greater than total number of if's
+
                     if(Token::tokens.at(i).level == 0){
                         if_result = check_if(i, Main::globalScope);
                     }else {
@@ -365,6 +390,18 @@ int Main::scope_engine(int i, Scope *scope)
             if(Token::tokens.at(i).content.find("else:") != string::npos && Token::tokens.at(i).type == "KEYWORD" && if_level == Token::tokens.at(i).level && !Main::if_result){
                 i++;
                 Main:: i = i;
+            }
+            if(Token::tokens.at(i).content.find("else:") != string::npos && (Main::if_result && if_level == Token::tokens.at(i).level)){
+                //skip else
+                while(Token::tokens.at(i).level >= if_level){
+                    if(i < Token::tokens.size()-1)
+                        i++;
+                    else{
+                        Main::last_line = true;
+                        break;
+                    }
+                }
+                Main::i = i;
             }
 
             // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -615,6 +652,8 @@ int main(){
             //do nothing
         }
     }
+
+    Main::print_nested_iflevels();
+
     return 0;
 }
-

@@ -45,7 +45,7 @@ return {printf("LINE=%d TYPE=RETURN TOKEN=%s LEVEL=%d\n", linenumber, yytext, in
 %% 
 /*** Code Section***/
 int yywrap(){} 
-int main(){ 
+int main(int argc, char **argv){ 
   
 // Explanation: 
 // yywrap() - wraps the above rule section 
@@ -58,10 +58,10 @@ int main(){
 // Uncomment the lines below  
 // to take input from file 
  FILE *fp; 
- char filename[50]; 
+ char* filename = argv[1];
  //char filename[50] = "program3.py";
  //printf("Enter the filename: \n"); 
- scanf("%s", filename); 
+ //scanf("%s", filename); 
  fp = fopen(filename,"r"); 
  yyin = fp; 
   

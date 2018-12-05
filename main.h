@@ -27,6 +27,8 @@ public:
     static map<string, int>functions;
     static bool check_if(int, Scope*);
     static int scope_engine(int i, Scope *scope);
+    static vector<int>nested_iflevels;
+    static void print_nested_iflevels();
 
     Main(Scope *globalScope);
 
